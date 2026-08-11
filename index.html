@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F8FC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Умножарий — таблица умножения и деления</title>
+<style>
+:root{
+  --paper:#F4F8FC;
+  --grid:#CFE2F3;
+  --margin-line:#E8908C;
+  --ink:#1B2A3A;
+  --ink-soft:#5A6E85;
+  --pen:#2C4CC8;
+  --ok:#128C5A;
+  --ok-bg:#DCF3E8;
+  --no:#C4372B;
+  --no-bg:#FBE3E0;
+  --gold:#E0A32E;
+  --cell:44px;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink);
+  font-family:'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+  font-size:17px;
+  line-height:1.45;
+  display:flex; justify-content:center;
+  padding:0 12px env(safe-area-inset-bottom) 12px;
+}
+.sheet{
+  width:100%; max-width:460px;
+  min-height:100%;
+  padding:18px 0 24px;
+  display:flex; flex-direction:column;
+}
+h1{
+  font-size:30px; font-weight:800; letter-spacing:-.5px;
+  margin:0; color:var(--pen);
+}
+h1 span{color:var(--ink)}
+.tagline{margin:2px 0 20px; color:var(--ink-soft); font-size:14px}
+h2{font-size:15px; font-weight:700; margin:0 0 8px; letter-spacing:.2px}
+.hint{font-size:13px; color:var(--ink-soft); margin:6px 0 0}
+
+.card{
+  background:#fff; border:1px solid #DCE7F2; border-radius:var(--r);
+  padding:14px; margin-bottom:12px;
+  box-shadow:0 1px 0 rgba(27,42,58,.04);
+}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  font:inherit; font-weight:700; cursor:pointer;
+  border:1.5px solid #C9D8E8; background:#fff; color:var(--ink-soft);
+  border-radius:11px; padding:9px 0; min-width:46px; flex:1 0 46px;
+  transition:transform .08s ease, background .15s, color .15s, border-color .15s;
+}
+.chip[aria-pressed="true"]{background:var(--pen); border-color:var(--pen); color:#fff}
+.chip:active{transform:scale(.94)}
+.chip.wide{flex:1 0 auto; padding:9px 14px; min-width:0}
+.row{display:flex; gap:8px}
+.big{
+  width:100%; font:inherit; font-size:19px; font-weight:800; cursor:pointer;
+  border:none; border-radius:var(--r); padding:16px; margin-top:4px;
+  background:var(--pen); color:#fff;
+  box-shadow:0 3px 0 #1F37A0;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+.big:active{transform:translateY(3px); box-shadow:0 0 0 #1F37A0}
+.ghost{
+  background:#fff; color:var(--pen); border:1.5px solid #C9D8E8; box-shadow:none;
+  font-weight:700; font-size:16px; padding:13px; border-radius:12px; cursor:pointer;
+  font-family:inherit; width:100%;
+}
+.ghost:active{background:#F0F5FB}
+
+/* ── игра ── */
+.bar{display:flex; align-items:center; gap:10px; margin-bottom:14px}
+.progress{flex:1; height:8px; background:#DCE7F2; border-radius:99px; overflow:hidden}
+.progress i{display:block; height:100%; width:0; background:var(--pen); border-radius:99px; transition:width .25s ease}
+.streak{font-weight:800; font-size:15px; color:var(--gold); min-width:44px; text-align:right; font-variant-numeric:tabular-nums}
+.exit{border:none; background:none; font:inherit; font-size:22px; line-height:1; color:var(--ink-soft); cursor:pointer; padding:0 4px}
+
+.stage{
+  background:#fff; border:1px solid #DCE7F2; border-radius:20px;
+  padding:26px 16px; text-align:center; margin-bottom:14px;
+  transition:background .2s, border-color .2s;
+}
+.stage.ok{background:var(--ok-bg); border-color:#A9DEC6}
+.stage.no{background:var(--no-bg); border-color:#F0B6AF}
+.task{
+  font-size:clamp(38px,13vw,54px); font-weight:800; letter-spacing:-1px;
+  font-variant-numeric:tabular-nums; margin:0;
+}
+.task em{font-style:normal; color:var(--ink-soft); font-weight:600; padding:0 6px}
+.blank{
+  display:inline-block; min-width:.72em; padding:0 .05em;
+  border-bottom:5px solid var(--pen); color:var(--pen);
+  border-radius:2px; line-height:.92;
+}
+.blank:empty{border-bottom-style:dashed; border-bottom-color:#B9CBE0}
+.blank:empty::before{content:'\00a0'}
+.answer{
+  margin-top:14px; height:56px;
+  font-size:42px; font-weight:800; color:var(--pen);
+  font-variant-numeric:tabular-nums;
+  display:flex; align-items:center; justify-content:center;
+}
+.answer.empty::after{
+  content:''; width:64px; border-bottom:3px solid #C9D8E8; margin-bottom:8px;
+}
+.caret{width:3px; height:38px; background:var(--pen); margin-left:3px; animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.verdict{font-size:15px; font-weight:700; min-height:22px; margin-top:2px}
+.verdict.ok{color:var(--ok)} .verdict.no{color:var(--no)}
+
+.pad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.key{
+  font:inherit; font-size:26px; font-weight:700; cursor:pointer;
+  background:#fff; border:1px solid #DCE7F2; border-radius:12px;
+  padding:14px 0; box-shadow:0 2px 0 #E3EBF4;
+  transition:transform .06s ease, box-shadow .06s ease;
+}
+.key:active{transform:translateY(2px); box-shadow:0 0 0 #E3EBF4; background:#F3F8FD}
+.key.go{background:var(--ok); color:#fff; border-color:var(--ok); box-shadow:0 2px 0 #0C6B44}
+.key.del{color:var(--ink-soft)}
+.options{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+.opt{font:inherit; font-size:28px; font-weight:800; padding:20px 0; cursor:pointer;
+  background:#fff; border:1px solid #DCE7F2; border-radius:14px; box-shadow:0 2px 0 #E3EBF4;
+  font-variant-numeric:tabular-nums}
+.opt:active{transform:translateY(2px); box-shadow:0 0 0 #E3EBF4}
+
+/* ── итоги ── */
+.score{text-align:center; padding:8px 0 4px}
+.score b{display:block; font-size:56px; font-weight:800; line-height:1; color:var(--pen); font-variant-numeric:tabular-nums}
+.score small{color:var(--ink-soft); font-size:14px}
+.stars{font-size:30px; letter-spacing:6px; margin:10px 0 2px}
+.mistakes{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+.miss{background:var(--no-bg); color:var(--no); border-radius:9px; padding:6px 10px; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums}
+
+/* ── карта знаний ── */
+.map{display:grid; grid-template-columns:repeat(9,1fr); gap:3px; font-variant-numeric:tabular-nums}
+.map div{
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; border-radius:5px; color:var(--ink);
+}
+.map .hd{background:none; color:var(--ink-soft); font-size:12px}
+.legend{display:flex; gap:12px; margin-top:10px; font-size:12px; color:var(--ink-soft); flex-wrap:wrap}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:4px; vertical-align:-1px}
+
+.hidden{display:none !important}
+.pop{animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.7); opacity:0}100%{transform:scale(1); opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<!-- ═══ СТАРТ ═══ -->
+<section id="start">
+  <h1>Умножарий<span>.</span></h1>
+  <p class="tagline">Таблица умножения и деления — по 5 минут в день</p>
+
+  <div class="card">
+    <h2>Что тренируем</h2>
+    <div class="chips" id="modes">
+      <button class="chip wide" data-mode="mul" aria-pressed="true">Умножение</button>
+      <button class="chip wide" data-mode="div" aria-pressed="false">Деление</button>
+      <button class="chip wide" data-mode="mix" aria-pressed="false">Вместе</button>
+      <button class="chip wide" data-mode="find" aria-pressed="false">Найди делитель</button>
+    </div>
+    <p class="hint" id="modeHint"></p>
+  </div>
+
+  <div class="card">
+    <h2 id="tablesTitle">Какие числа</h2>
+    <div class="chips" id="tables"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="allTables">Все</button>
+      <button class="ghost" id="hardTables">Трудные</button>
+    </div>
+    <p class="hint" id="hardHint">«Трудные» выбирает числа, где было больше всего ошибок.</p>
+  </div>
+
+  <div class="card">
+    <h2>Сколько примеров</h2>
+    <div class="chips" id="lengths">
+      <button class="chip" data-len="10" aria-pressed="true">10</button>
+      <button class="chip" data-len="20" aria-pressed="false">20</button>
+      <button class="chip" data-len="40" aria-pressed="false">40</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Как отвечать</h2>
+    <div class="chips" id="inputs">
+      <button class="chip wide" data-input="type" aria-pressed="true">Набирать</button>
+      <button class="chip wide" data-input="pick" aria-pressed="false">Выбирать из четырёх</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="chip wide" id="sound" aria-pressed="true" style="flex:1">Звук включён</button>
+    </div>
+  </div>
+
+  <button class="big" id="play">Начать</button>
+  <button class="ghost" id="toMap" style="margin-top:10px">Карта знаний</button>
+</section>
+
+<!-- ═══ ИГРА ═══ -->
+<section id="game" class="hidden">
+  <div class="bar">
+    <button class="exit" id="quit" aria-label="Выйти">✕</button>
+    <div class="progress"><i id="pbar"></i></div>
+    <div class="streak" id="streak"></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <p class="task" id="task">—</p>
+    <div class="answer empty" id="answer"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <div class="pad" id="pad"></div>
+  <div class="options hidden" id="options"></div>
+</section>
+
+<!-- ═══ ИТОГИ ═══ -->
+<section id="result" class="hidden">
+  <div class="card">
+    <div class="score">
+      <div class="stars" id="stars"></div>
+      <b id="rScore">0/0</b>
+      <small id="rTime"></small>
+    </div>
+  </div>
+  <div class="card hidden" id="missBox">
+    <h2>Над этим стоит поработать</h2>
+    <div class="mistakes" id="missList"></div>
+  </div>
+  <button class="big" id="again">Ещё раз</button>
+  <button class="ghost" id="repeatErr" style="margin-top:10px">Повторить ошибки</button>
+  <button class="ghost" id="home" style="margin-top:10px">В начало</button>
+</section>
+
+<!-- ═══ КАРТА ═══ -->
+<section id="mapView" class="hidden">
+  <div class="card">
+    <h2>Карта знаний</h2>
+    <div class="map" id="mapGrid"></div>
+    <div class="legend">
+      <span><i style="background:#EDF2F7"></i>не пробовали</span>
+      <span><i style="background:#F7E0A8"></i>учим</span>
+      <span><i style="background:#B7E4CD"></i>почти</span>
+      <span><i style="background:#128C5A"></i>знаем</span>
+    </div>
+    <p class="hint" id="mapTotal"></p>
+  </div>
+  <button class="ghost" id="mapBack">Назад</button>
+  <button class="ghost" id="reset" style="margin-top:10px; color:var(--no); border-color:#F0B6AF">Стереть прогресс</button>
+</section>
+
+</div>
+<script>
+'use strict';
+
+/* ── хранилище: localStorage, а если недоступен — память ── */
+var mem = {};
+var store = {
+  get: function(k, d){
+    try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }
+    catch(e){ return (k in mem) ? mem[k] : d; }
+  },
+  set: function(k, v){
+    try { localStorage.setItem(k, JSON.stringify(v)); }
+    catch(e){ mem[k] = v; }
+  }
+};
+
+var $ = function(id){ return document.getElementById(id); };
+
+/* ── состояние ── */
+var cfg   = store.get('cfg', {mode:'mul', tables:[2,3,4,5,6,7,8,9], len:10, input:'type', sound:true});
+var facts = store.get('facts', {});          // "3x7" -> {c:верно, w:ошибок}
+var S = null;                                 // текущая сессия
+
+/* ── звук ── */
+var actx = null;
+function beep(freq, dur, type){
+  if (!cfg.sound) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, actx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + dur + 0.02);
+  }catch(e){}
+}
+var sndOk   = function(){ beep(880,0.09); setTimeout(function(){beep(1320,0.12);},70); };
+var sndNo   = function(){ beep(190,0.22,'triangle'); };
+var sndDone = function(){ [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.14);}, i*110); }); };
+
+/* ── факты ── */
+function key(a,b){ return Math.min(a,b) + 'x' + Math.max(a,b); }
+function stat(a,b){ return facts[key(a,b)] || {c:0, w:0}; }
+function mark(a,b,good){
+  var k = key(a,b), f = facts[k] || {c:0, w:0};
+  if (good) f.c++; else f.w++;
+  facts[k] = f; store.set('facts', facts);
+}
+
+/* вес: чаще показываем то, где ошибались и что давно не встречалось */
+function weight(a,b){
+  var f = stat(a,b);
+  return 1 + f.w * 4 - Math.min(f.c, 6) * 0.14;
+}
+
+function buildQuestion(){
+  var pool = [];
+  for (var i = 0; i < cfg.tables.length; i++){
+    var a = cfg.tables[i];
+    for (var b = 2; b <= 9; b++) pool.push([a, b, Math.max(0.15, weight(a,b))]);
+  }
+  var total = 0, j;
+  for (j = 0; j < pool.length; j++) total += pool[j][2];
+  var r = Math.random() * total, pick = pool[0];
+  for (j = 0; j < pool.length; j++){ r -= pool[j][2]; if (r <= 0){ pick = pool[j]; break; } }
+
+  var a = pick[0], b = pick[1];
+  var op = cfg.mode === 'mix' ? (Math.random() < 0.5 ? 'mul' : 'div') : cfg.mode;
+
+  if (op === 'mul'){
+    if (Math.random() < 0.5){ var t = a; a = b; b = t; }
+    return {a:a, b:b, op:'mul', ans:a * b,
+            text:a + ' <em>×</em> ' + b,
+            plain:a + ' × ' + b + ' = ' + (a * b)};
+  }
+  if (op === 'find'){
+    // делитель спрятан, выбранное число стоит частным — ответы пробегают 2…9
+    return {a:a, b:b, op:'find', ans:b,
+            text:(a * b) + ' <em>÷</em> <span class="blank"></span> <em>=</em> ' + a,
+            plain:(a * b) + ' ÷ ' + b + ' = ' + a};
+  }
+  // выбранное число — всегда делитель, частное меняется
+  return {a:a, b:b, op:'div', ans:b,
+          text:(a * b) + ' <em>÷</em> ' + a,
+          plain:(a * b) + ' ÷ ' + a + ' = ' + b};
+}
+
+/* ── экраны ── */
+function show(id){
+  ['start','game','result','mapView'].forEach(function(s){ $(s).classList.toggle('hidden', s !== id); });
+  window.scrollTo(0, 0);
+}
+
+/* ── настройки ── */
+function paintChips(){
+  var i, el, els;
+  els = document.querySelectorAll('#modes .chip');
+  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', els[i].dataset.mode === cfg.mode);
+  els = document.querySelectorAll('#lengths .chip');
+  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', +els[i].dataset.len === cfg.len);
+  els = document.querySelectorAll('#inputs .chip');
+  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', els[i].dataset.input === cfg.input);
+  els = document.querySelectorAll('#tables .chip');
+  for (i = 0; i < els.length; i++){
+    el = els[i];
+    el.setAttribute('aria-pressed', cfg.tables.indexOf(+el.dataset.t) > -1);
+  }
+  var n = cfg.tables.length ? cfg.tables[0] : 7;
+  $('tablesTitle').textContent = cfg.mode === 'div' ? 'Делим на эти числа'
+    : cfg.mode === 'mul' ? 'Умножаем на эти числа'
+    : cfg.mode === 'find' ? 'В ответе примера стоят эти числа' : 'Какие числа';
+  $('modeHint').innerHTML =
+      cfg.mode === 'mul'  ? 'Например: ' + n + ' × 6 = <b>' + (n * 6) + '</b>'
+    : cfg.mode === 'div'  ? 'Например: ' + (n * 6) + ' ÷ ' + n + ' = <b>6</b> — выбранное число стоит делителем.'
+    : cfg.mode === 'find' ? 'Например: ' + (n * 6) + ' ÷ <b>6</b> = ' + n + ' — делитель спрятан, его и надо найти.'
+    : 'Умножение и деление вперемешку.';
+  $('sound').textContent = cfg.sound ? 'Звук включён' : 'Звук выключен';
+  $('sound').setAttribute('aria-pressed', cfg.sound);
+  $('play').disabled = cfg.tables.length === 0;
+  $('play').style.opacity = cfg.tables.length ? 1 : .45;
+}
+
+(function initTables(){
+  var box = $('tables');
+  for (var n = 2; n <= 9; n++){
+    var b = document.createElement('button');
+    b.className = 'chip'; b.dataset.t = n; b.textContent = n;
+    box.appendChild(b);
+  }
+})();
+
+$('tables').addEventListener('click', function(e){
+  var b = e.target.closest('.chip'); if (!b) return;
+  var n = +b.dataset.t, i = cfg.tables.indexOf(n);
+  if (i > -1) cfg.tables.splice(i, 1); else cfg.tables.push(n);
+  cfg.tables.sort(function(x,y){ return x - y; });
+  store.set('cfg', cfg); paintChips();
+});
+$('allTables').onclick = function(){ cfg.tables = [2,3,4,5,6,7,8,9]; store.set('cfg', cfg); paintChips(); };
+$('hardTables').onclick = function(){
+  var score = {};
+  for (var n = 2; n <= 9; n++){
+    score[n] = 0;
+    for (var b = 2; b <= 9; b++){ var f = stat(n,b); score[n] += f.w * 2 - Math.min(f.c,4) * 0.2; }
+  }
+  var order = [2,3,4,5,6,7,8,9].sort(function(x,y){ return score[y] - score[x]; });
+  var hard = order.slice(0,4).sort(function(x,y){ return x - y; });
+  var any = hard.some(function(n){ return score[n] > 0; });
+  cfg.tables = any ? hard : [6,7,8,9];
+  $('hardHint').textContent = any
+    ? 'Выбрали числа с наибольшим числом ошибок: ' + cfg.tables.join(', ') + '.'
+    : 'Ошибок пока не записано — взяли самые каверзные: 6, 7, 8, 9.';
+  store.set('cfg', cfg); paintChips();
+};
+$('modes').addEventListener('click', function(e){
+  var b = e.target.closest('.chip'); if (!b) return;
+  cfg.mode = b.dataset.mode; store.set('cfg', cfg); paintChips();
+});
+$('lengths').addEventListener('click', function(e){
+  var b = e.target.closest('.chip'); if (!b) return;
+  cfg.len = +b.dataset.len; store.set('cfg', cfg); paintChips();
+});
+$('inputs').addEventListener('click', function(e){
+  var b = e.target.closest('.chip'); if (!b) return;
+  cfg.input = b.dataset.input; store.set('cfg', cfg); paintChips();
+});
+$('sound').onclick = function(){ cfg.sound = !cfg.sound; store.set('cfg', cfg); paintChips(); if (cfg.sound) beep(880,0.08); };
+
+/* ── клавиатура ── */
+(function initPad(){
+  var pad = $('pad'), labels = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+  labels.forEach(function(l){
+    var b = document.createElement('button');
+    b.className = 'key' + (l === '✓' ? ' go' : l === '⌫' ? ' del' : '');
+    b.textContent = l; b.dataset.k = l;
+    pad.appendChild(b);
+  });
+})();
+
+$('pad').addEventListener('click', function(e){
+  var b = e.target.closest('.key'); if (!b) return;
+  var k = b.dataset.k;
+  if (k === '⌫') typeIn(null);
+  else if (k === '✓') submit(S.typed === '' ? null : +S.typed);
+  else typeIn(k);
+});
+$('options').addEventListener('click', function(e){
+  var b = e.target.closest('.opt'); if (!b) return;
+  submit(+b.dataset.v);
+});
+document.addEventListener('keydown', function(e){
+  if ($('game').classList.contains('hidden') || cfg.input !== 'type') return;
+  if (e.key >= '0' && e.key <= '9') typeIn(e.key);
+  else if (e.key === 'Backspace') typeIn(null);
+  else if (e.key === 'Enter') submit(S.typed === '' ? null : +S.typed);
+});
+
+function typeIn(d){
+  if (S.locked) return;
+  if (d === null) S.typed = S.typed.slice(0, -1);
+  else if (S.typed.length < 2) S.typed += d;
+  paintAnswer();
+}
+function paintAnswer(){
+  var blank = document.querySelector('#task .blank');
+  if (blank){ blank.textContent = S.typed; return; }   // в режиме «Найди делитель» пишем в пропуск
+  var a = $('answer');
+  if (S.typed === ''){ a.className = 'answer empty'; a.textContent = ''; }
+  else { a.className = 'answer'; a.innerHTML = S.typed + '<span class="caret"></span>'; }
+}
+
+/* ── игровой цикл ── */
+function startSession(queue){
+  S = {i:0, right:0, streak:0, best:0, typed:'', locked:false,
+       mistakes:[], t0:Date.now(), queue:queue || null,
+       total:queue ? queue.length : cfg.len};
+  show('game');
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if (S.i >= S.total) return finish();
+  S.q = S.queue ? S.queue[S.i] : buildQuestion();
+  S.typed = ''; S.locked = false;
+  $('task').innerHTML = S.q.text;
+  $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
+  $('verdict').textContent = ''; $('verdict').className = 'verdict';
+  $('stage').className = 'stage';
+  $('pbar').style.width = (S.i / S.total * 100) + '%';
+  $('streak').textContent = S.streak >= 3 ? '🔥 ' + S.streak : '';
+  paintAnswer();
+
+  var typing = cfg.input === 'type';
+  $('pad').classList.toggle('hidden', !typing);
+  $('options').classList.toggle('hidden', typing);
+  $('answer').style.display = (typing && S.q.op !== 'find') ? 'flex' : 'none';
+  if (!typing) paintOptions(S.q.ans);
+}
+
+function paintOptions(ans){
+  var set = [ans], tries = 0;
+  while (set.length < 4 && tries++ < 200){
+    var d = ans + (Math.floor(Math.random() * 11) - 5);
+    if (S.q.op !== 'mul') d = 2 + Math.floor(Math.random() * 8);
+    if (d > 0 && set.indexOf(d) === -1) set.push(d);
+  }
+  set.sort(function(){ return Math.random() - 0.5; });
+  $('options').innerHTML = set.map(function(v){
+    return '<button class="opt" data-v="' + v + '">' + v + '</button>';
+  }).join('');
+}
+
+function submit(val){
+  if (S.locked || val === null || isNaN(val)) return;
+  S.locked = true;
+  var good = val === S.q.ans;
+  mark(S.q.a, S.q.b, good);
+
+  if (good){
+    S.right++; S.streak++; S.best = Math.max(S.best, S.streak);
+    $('stage').className = 'stage ok';
+    $('verdict').className = 'verdict ok';
+    $('verdict').textContent = S.streak >= 5 ? 'Подряд ' + S.streak + '!' : 'Верно';
+    sndOk();
+  } else {
+    S.streak = 0;
+    S.mistakes.push(S.q);
+    $('stage').className = 'stage no';
+    $('verdict').className = 'verdict no';
+    $('verdict').innerHTML = 'Правильный ответ — <b>' + S.q.ans + '</b>';
+    if (cfg.input === 'type'){ $('answer').className = 'answer'; $('answer').textContent = val; }
+    sndNo();
+  }
+  S.i++;
+  $('pbar').style.width = (S.i / S.total * 100) + '%';
+  setTimeout(nextQuestion, good ? 550 : 1500);
+}
+
+function finish(){
+  var sec = Math.round((Date.now() - S.t0) / 1000);
+  var pct = S.total ? S.right / S.total : 0;
+  var n = pct >= 0.95 ? 3 : pct >= 0.8 ? 2 : pct >= 0.6 ? 1 : 0;
+  $('stars').textContent = '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n);
+  $('rScore').textContent = S.right + '/' + S.total;
+  $('rTime').textContent = 'за ' + Math.floor(sec / 60) + ' мин ' + (sec % 60) + ' с'
+    + (S.best >= 3 ? ' · лучшая серия ' + S.best : '');
+  var box = $('missBox');
+  if (S.mistakes.length){
+    box.classList.remove('hidden');
+    $('missList').innerHTML = S.mistakes.map(function(q){
+      return '<span class="miss">' + q.plain + '</span>';
+    }).join('');
+  } else box.classList.add('hidden');
+  $('repeatErr').classList.toggle('hidden', S.mistakes.length === 0);
+  if (n === 3) sndDone(); else beep(660, 0.15);
+  show('result');
+}
+
+$('play').onclick   = function(){ startSession(null); };
+$('again').onclick  = function(){ startSession(null); };
+$('home').onclick   = function(){ paintChips(); show('start'); };
+$('quit').onclick   = function(){ show('start'); };
+$('repeatErr').onclick = function(){ startSession(S.mistakes.slice()); };
+
+/* ── карта знаний ── */
+function paintMap(){
+  var g = $('mapGrid'), html = '<div class="hd">×</div>', a, b;
+  for (b = 2; b <= 9; b++) html += '<div class="hd">' + b + '</div>';
+  var known = 0;
+  for (a = 2; a <= 9; a++){
+    html += '<div class="hd">' + a + '</div>';
+    for (b = 2; b <= 9; b++){
+      var f = stat(a,b), n = f.c + f.w, bg = '#EDF2F7', fg = 'var(--ink)';
+      if (n > 0){
+        var rate = f.c / n, lvl = rate * Math.min(1, f.c / 3);
+        if (lvl >= 0.85){ bg = '#128C5A'; fg = '#fff'; known++; }
+        else if (lvl >= 0.5) bg = '#B7E4CD';
+        else bg = '#F7E0A8';
+      }
+      html += '<div style="background:' + bg + ';color:' + fg + '">' + (a * b) + '</div>';
+    }
+  }
+  g.innerHTML = html;
+  $('mapTotal').textContent = 'Освоено ' + known + ' из 64 примеров. Клетка зеленеет после трёх верных ответов подряд по этой паре.';
+}
+$('toMap').onclick   = function(){ paintMap(); show('mapView'); };
+$('mapBack').onclick = function(){ show('start'); };
+$('reset').onclick   = function(){
+  if (!confirm('Стереть всю статистику и карту знаний?')) return;
+  facts = {}; store.set('facts', facts); paintMap();
+};
+
+paintChips();
+
+/* регистрация service worker: работает только по https, локально молча пропускаем */
+if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
