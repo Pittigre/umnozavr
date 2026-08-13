@@ -9,141 +9,97 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Умножарий — таблица умножения и деления</title>
+<title>Умножарий — таблица, деление, порядок действий</title>
 <style>
 :root{
-  --paper:#F4F8FC;
-  --grid:#CFE2F3;
-  --margin-line:#E8908C;
-  --ink:#1B2A3A;
-  --ink-soft:#5A6E85;
-  --pen:#2C4CC8;
-  --ok:#128C5A;
-  --ok-bg:#DCF3E8;
-  --no:#C4372B;
-  --no-bg:#FBE3E0;
-  --gold:#E0A32E;
-  --cell:44px;
-  --r:14px;
+  --paper:#F4F8FC; --grid:#CFE2F3; --ink:#1B2A3A; --ink-soft:#5A6E85;
+  --pen:#2C4CC8; --ok:#128C5A; --ok-bg:#DCF3E8; --no:#C4372B; --no-bg:#FBE3E0;
+  --gold:#E0A32E; --green:#4AA868; --r:14px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{
   background:var(--paper);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
   background-size:24px 24px;
   color:var(--ink);
-  font-family:'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
-  font-size:17px;
-  line-height:1.45;
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,'Helvetica Neue',sans-serif;
+  font-size:17px; line-height:1.45;
   display:flex; justify-content:center;
   padding:0 12px env(safe-area-inset-bottom) 12px;
 }
-.sheet{
-  width:100%; max-width:460px;
-  min-height:100%;
-  padding:18px 0 24px;
-  display:flex; flex-direction:column;
-}
-h1{
-  font-size:30px; font-weight:800; letter-spacing:-.5px;
-  margin:0; color:var(--pen);
-}
+.sheet{width:100%; max-width:460px; min-height:100%; padding:18px 0 24px; display:flex; flex-direction:column}
+h1{font-size:30px; font-weight:800; letter-spacing:-.5px; margin:0; color:var(--pen)}
 h1 span{color:var(--ink)}
 .tagline{margin:2px 0 20px; color:var(--ink-soft); font-size:14px}
-h2{font-size:15px; font-weight:700; margin:0 0 8px; letter-spacing:.2px}
+h2{font-size:15px; font-weight:700; margin:0 0 8px}
 .hint{font-size:13px; color:var(--ink-soft); margin:6px 0 0}
+.card{background:#fff; border:1px solid #DCE7F2; border-radius:var(--r); padding:14px; margin-bottom:12px}
 
-.card{
-  background:#fff; border:1px solid #DCE7F2; border-radius:var(--r);
-  padding:14px; margin-bottom:12px;
-  box-shadow:0 1px 0 rgba(27,42,58,.04);
+.topic{
+  display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+  background:#fff; border:1px solid #DCE7F2; border-radius:var(--r); padding:16px 14px; margin-bottom:12px;
+  font:inherit; color:inherit;
 }
+.topic:active{background:#F3F8FD}
+.topic b{display:block; font-size:18px; font-weight:800; margin-bottom:2px}
+.topic small{color:var(--ink-soft); font-size:13.5px; line-height:1.35; display:block}
+.topic .ic{font-size:30px; line-height:1; flex:0 0 auto; width:44px; text-align:center; color:var(--pen); font-weight:800}
+.topic.soon{opacity:.55}
+
 .chips{display:flex; flex-wrap:wrap; gap:8px}
-.chip{
-  font:inherit; font-weight:700; cursor:pointer;
-  border:1.5px solid #C9D8E8; background:#fff; color:var(--ink-soft);
-  border-radius:11px; padding:9px 0; min-width:46px; flex:1 0 46px;
-  transition:transform .08s ease, background .15s, color .15s, border-color .15s;
-}
+.chip{font:inherit; font-weight:700; cursor:pointer; border:1.5px solid #C9D8E8; background:#fff; color:var(--ink-soft);
+  border-radius:11px; padding:9px 0; min-width:46px; flex:1 0 46px; transition:transform .08s ease,background .15s,color .15s}
 .chip[aria-pressed="true"]{background:var(--pen); border-color:var(--pen); color:#fff}
 .chip:active{transform:scale(.94)}
 .chip.wide{flex:1 0 auto; padding:9px 14px; min-width:0}
 .row{display:flex; gap:8px}
-.big{
-  width:100%; font:inherit; font-size:19px; font-weight:800; cursor:pointer;
-  border:none; border-radius:var(--r); padding:16px; margin-top:4px;
-  background:var(--pen); color:#fff;
-  box-shadow:0 3px 0 #1F37A0;
-  transition:transform .08s ease, box-shadow .08s ease;
-}
+.big{width:100%; font:inherit; font-size:19px; font-weight:800; cursor:pointer; border:none; border-radius:var(--r);
+  padding:16px; margin-top:4px; background:var(--pen); color:#fff; box-shadow:0 3px 0 #1F37A0}
 .big:active{transform:translateY(3px); box-shadow:0 0 0 #1F37A0}
-.ghost{
-  background:#fff; color:var(--pen); border:1.5px solid #C9D8E8; box-shadow:none;
-  font-weight:700; font-size:16px; padding:13px; border-radius:12px; cursor:pointer;
-  font-family:inherit; width:100%;
-}
+.ghost{background:#fff; color:var(--pen); border:1.5px solid #C9D8E8; font-weight:700; font-size:16px;
+  padding:13px; border-radius:12px; cursor:pointer; font-family:inherit; width:100%; margin-top:10px}
 .ghost:active{background:#F0F5FB}
 
-/* ── игра ── */
 .bar{display:flex; align-items:center; gap:10px; margin-bottom:14px}
 .progress{flex:1; height:8px; background:#DCE7F2; border-radius:99px; overflow:hidden}
-.progress i{display:block; height:100%; width:0; background:var(--pen); border-radius:99px; transition:width .25s ease}
-.streak{font-weight:800; font-size:15px; color:var(--gold); min-width:44px; text-align:right; font-variant-numeric:tabular-nums}
-.exit{border:none; background:none; font:inherit; font-size:22px; line-height:1; color:var(--ink-soft); cursor:pointer; padding:0 4px}
+.progress i{display:block; height:100%; width:0; background:var(--pen); transition:width .25s ease}
+.streak{font-weight:800; font-size:15px; color:var(--gold); min-width:44px; text-align:right}
+.exit{border:none; background:none; font:inherit; font-size:22px; color:var(--ink-soft); cursor:pointer; padding:0 4px}
 
-.stage{
-  background:#fff; border:1px solid #DCE7F2; border-radius:20px;
-  padding:26px 16px; text-align:center; margin-bottom:14px;
-  transition:background .2s, border-color .2s;
-}
+.stage{background:#fff; border:1px solid #DCE7F2; border-radius:20px; padding:24px 12px; text-align:center; margin-bottom:14px; transition:background .2s,border-color .2s}
 .stage.ok{background:var(--ok-bg); border-color:#A9DEC6}
 .stage.no{background:var(--no-bg); border-color:#F0B6AF}
-.task{
-  font-size:clamp(38px,13vw,54px); font-weight:800; letter-spacing:-1px;
-  font-variant-numeric:tabular-nums; margin:0;
-}
-.task em{font-style:normal; color:var(--ink-soft); font-weight:600; padding:0 6px}
-.blank{
-  display:inline-block; min-width:.72em; padding:0 .05em;
-  border-bottom:5px solid var(--pen); color:var(--pen);
-  border-radius:2px; line-height:.92;
-}
+.step0{font-size:14px; color:var(--ink-soft); min-height:20px; margin:0 0 6px; font-variant-numeric:tabular-nums}
+.task{font-size:clamp(30px,9.5vw,44px); font-weight:800; letter-spacing:-.5px; font-variant-numeric:tabular-nums; margin:0; line-height:1.15}
+.task em{font-style:normal; color:var(--ink-soft); font-weight:600; padding:0 5px}
+.blank{display:inline-block; min-width:.72em; padding:0 .05em; border-bottom:5px solid var(--pen); color:var(--pen); line-height:.92}
 .blank:empty{border-bottom-style:dashed; border-bottom-color:#B9CBE0}
 .blank:empty::before{content:'\00a0'}
-.answer{
-  margin-top:14px; height:56px;
-  font-size:42px; font-weight:800; color:var(--pen);
-  font-variant-numeric:tabular-nums;
-  display:flex; align-items:center; justify-content:center;
-}
-.answer.empty::after{
-  content:''; width:64px; border-bottom:3px solid #C9D8E8; margin-bottom:8px;
-}
-.caret{width:3px; height:38px; background:var(--pen); margin-left:3px; animation:blink 1s steps(1) infinite}
+.op{font:inherit; font-size:inherit; font-weight:800; color:var(--pen); background:#EAF1FC; border:2px solid #C6D8F5;
+  border-radius:10px; padding:0 8px; margin:0 4px; cursor:pointer; line-height:1.1}
+.op:active{transform:scale(.92)}
+.op.done{background:var(--ok-bg); border-color:#A9DEC6; color:var(--ok)}
+.grp{white-space:nowrap}
+.answer{margin-top:12px; height:52px; font-size:40px; font-weight:800; color:var(--pen); display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums}
+.answer.empty::after{content:''; width:64px; border-bottom:3px solid #C9D8E8; margin-bottom:8px}
+.caret{width:3px; height:34px; background:var(--pen); margin-left:3px; animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .verdict{font-size:15px; font-weight:700; min-height:22px; margin-top:2px}
 .verdict.ok{color:var(--ok)} .verdict.no{color:var(--no)}
+.ask{font-size:14px; font-weight:700; color:var(--pen); margin:0 0 10px}
 
 .pad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
-.key{
-  font:inherit; font-size:26px; font-weight:700; cursor:pointer;
-  background:#fff; border:1px solid #DCE7F2; border-radius:12px;
-  padding:14px 0; box-shadow:0 2px 0 #E3EBF4;
-  transition:transform .06s ease, box-shadow .06s ease;
-}
+.key{font:inherit; font-size:26px; font-weight:700; cursor:pointer; background:#fff; border:1px solid #DCE7F2;
+  border-radius:12px; padding:14px 0; box-shadow:0 2px 0 #E3EBF4}
 .key:active{transform:translateY(2px); box-shadow:0 0 0 #E3EBF4; background:#F3F8FD}
 .key.go{background:var(--ok); color:#fff; border-color:var(--ok); box-shadow:0 2px 0 #0C6B44}
 .key.del{color:var(--ink-soft)}
 .options{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
-.opt{font:inherit; font-size:28px; font-weight:800; padding:20px 0; cursor:pointer;
-  background:#fff; border:1px solid #DCE7F2; border-radius:14px; box-shadow:0 2px 0 #E3EBF4;
-  font-variant-numeric:tabular-nums}
+.opt{font:inherit; font-size:28px; font-weight:800; padding:20px 0; cursor:pointer; background:#fff;
+  border:1px solid #DCE7F2; border-radius:14px; box-shadow:0 2px 0 #E3EBF4; font-variant-numeric:tabular-nums}
 .opt:active{transform:translateY(2px); box-shadow:0 0 0 #E3EBF4}
 
-/* ── итоги ── */
 .score{text-align:center; padding:8px 0 4px}
 .score b{display:block; font-size:56px; font-weight:800; line-height:1; color:var(--pen); font-variant-numeric:tabular-nums}
 .score small{color:var(--ink-soft); font-size:14px}
@@ -151,16 +107,44 @@ h2{font-size:15px; font-weight:700; margin:0 0 8px; letter-spacing:.2px}
 .mistakes{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
 .miss{background:var(--no-bg); color:var(--no); border-radius:9px; padding:6px 10px; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums}
 
-/* ── карта знаний ── */
 .map{display:grid; grid-template-columns:repeat(9,1fr); gap:3px; font-variant-numeric:tabular-nums}
-.map div{
-  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700; border-radius:5px; color:var(--ink);
-}
-.map .hd{background:none; color:var(--ink-soft); font-size:12px}
+.map div{aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:5px}
+.map .hd{background:none; color:var(--ink-soft)}
 .legend{display:flex; gap:12px; margin-top:10px; font-size:12px; color:var(--ink-soft); flex-wrap:wrap}
-.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:4px; vertical-align:-1px}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:4px}
+.prow{margin:10px 0}
+.prow .lab{display:flex; justify-content:space-between; font-size:14px; margin-bottom:3px; font-variant-numeric:tabular-nums}
+.prow .lab span:last-child{color:var(--ink-soft); font-size:13px}
+.track{height:9px; background:#EDF2F7; border-radius:99px; overflow:hidden}
+.track i{display:block; height:100%; background:var(--green)}
 
+/* стикеры */
+.sgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+.st{background:#fff; border:1px solid #DCE7F2; border-radius:var(--r); padding:10px; text-align:center; position:relative; overflow:hidden}
+.st .pic{width:100%; aspect-ratio:3/4; border-radius:10px; background:#EDF2F7; display:flex; align-items:center; justify-content:center;
+  font-size:34px; font-weight:800; color:#B9CBE0; overflow:hidden}
+.st .pic img{width:100%; height:100%; object-fit:cover; display:block}
+.st.lock .pic img{filter:grayscale(1) contrast(.4) brightness(1.25)}
+.st.lock .pic{position:relative}
+.st.lock .pic::after{content:'🔒'; position:absolute; font-size:26px; filter:none}
+.st b{display:block; font-size:14px; font-weight:800; margin:8px 0 2px}
+.st small{display:block; font-size:12px; color:var(--ink-soft); line-height:1.3; min-height:32px}
+.st .track{margin-top:7px}
+.st.got{border-color:#A9DEC6; background:#F5FCF8}
+.st.got small{color:var(--ok); font-weight:700}
+.capt{margin-top:10px}
+.capt div{display:flex; gap:8px; align-items:flex-start; font-size:13.5px; margin:5px 0; color:var(--ink-soft)}
+.capt div.on{color:var(--ok); font-weight:700}
+.capt i{font-style:normal; flex:0 0 auto}
+.wrap{position:fixed; inset:0; background:rgba(27,42,58,.72); display:flex; align-items:center; justify-content:center;
+  padding:24px; z-index:9; text-align:center}
+.wrap .in{background:#fff; border-radius:20px; padding:22px 18px; max-width:320px; width:100%; animation:pop .35s ease}
+.wrap .pic{width:60%; margin:0 auto 12px; aspect-ratio:3/4; border-radius:12px; background:#EDF2F7; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; font-size:44px; color:#B9CBE0; font-weight:800}
+.wrap .pic img{width:100%; height:100%; object-fit:cover}
+.wrap h3{margin:0 0 2px; font-size:22px; color:var(--pen)}
+.wrap p{margin:0 0 14px; font-size:14px; color:var(--ink-soft)}
+.wrap .big{margin-top:0}
 .hidden{display:none !important}
 .pop{animation:pop .3s ease}
 @keyframes pop{0%{transform:scale(.7); opacity:0}100%{transform:scale(1); opacity:1}}
@@ -171,11 +155,30 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
 <body>
 <div class="sheet">
 
-<!-- ═══ СТАРТ ═══ -->
-<section id="start">
+<!-- ═══ ВЫБОР ТЕМЫ ═══ -->
+<section id="topics">
   <h1>Умножарий<span>.</span></h1>
-  <p class="tagline">Таблица умножения и деления — по 5 минут в день</p>
+  <p class="tagline">Математика третьего класса — по пять минут в день</p>
 
+  <button class="topic" data-topic="table">
+    <span class="ic">×÷</span>
+    <span><b>Таблица</b><small>Умножение, деление, поиск делителя</small></span>
+  </button>
+  <button class="topic" data-topic="order">
+    <span class="ic">( )</span>
+    <span><b>Порядок действий</b><small>Что считаем первым, скобки</small></span>
+  </button>
+  <button class="topic soon" disabled>
+    <span class="ic">▭</span>
+    <span><b>Периметр и площадь</b><small>Скоро</small></span>
+  </button>
+
+  <button class="ghost" id="toStickers">Награды</button>
+  <button class="ghost" id="toProgress">Успехи</button>
+</section>
+
+<!-- ═══ НАСТРОЙКИ: ТАБЛИЦА ═══ -->
+<section id="setupTable" class="hidden">
   <div class="card">
     <h2>Что тренируем</h2>
     <div class="chips" id="modes">
@@ -186,17 +189,15 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     </div>
     <p class="hint" id="modeHint"></p>
   </div>
-
   <div class="card">
     <h2 id="tablesTitle">Какие числа</h2>
     <div class="chips" id="tables"></div>
     <div class="row" style="margin-top:10px">
-      <button class="ghost" id="allTables">Все</button>
-      <button class="ghost" id="hardTables">Трудные</button>
+      <button class="ghost" id="allTables" style="margin:0">Все</button>
+      <button class="ghost" id="hardTables" style="margin:0">Трудные</button>
     </div>
     <p class="hint" id="hardHint">«Трудные» выбирает числа, где было больше всего ошибок.</p>
   </div>
-
   <div class="card">
     <h2>Сколько примеров</h2>
     <div class="chips" id="lengths">
@@ -205,20 +206,40 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
       <button class="chip" data-len="40" aria-pressed="false">40</button>
     </div>
   </div>
-
   <div class="card">
     <h2>Как отвечать</h2>
     <div class="chips" id="inputs">
       <button class="chip wide" data-input="type" aria-pressed="true">Набирать</button>
       <button class="chip wide" data-input="pick" aria-pressed="false">Выбирать из четырёх</button>
     </div>
-    <div class="row" style="margin-top:10px">
-      <button class="chip wide" id="sound" aria-pressed="true" style="flex:1">Звук включён</button>
+    <p class="hint">Ответы с выбором из четырёх не идут в зачёт стикеров.</p>
+  </div>
+  <button class="big" id="playTable">Начать</button>
+  <button class="ghost back">Назад</button>
+</section>
+
+<!-- ═══ НАСТРОЙКИ: ПОРЯДОК ДЕЙСТВИЙ ═══ -->
+<section id="setupOrder" class="hidden">
+  <div class="card">
+    <h2>Уровень</h2>
+    <div class="chips" id="levels">
+      <button class="chip wide" data-lvl="1" aria-pressed="true">Без скобок</button>
+      <button class="chip wide" data-lvl="2" aria-pressed="false">Со скобками</button>
+      <button class="chip wide" data-lvl="3" aria-pressed="false">Вперемешку</button>
+    </div>
+    <p class="hint" id="lvlHint"></p>
+  </div>
+  <div class="card">
+    <h2>Сколько примеров</h2>
+    <div class="chips" id="lengths2">
+      <button class="chip" data-len="8" aria-pressed="true">8</button>
+      <button class="chip" data-len="12" aria-pressed="false">12</button>
+      <button class="chip" data-len="20" aria-pressed="false">20</button>
     </div>
   </div>
-
-  <button class="big" id="play">Начать</button>
-  <button class="ghost" id="toMap" style="margin-top:10px">Карта знаний</button>
+  <p class="hint" style="margin:0 2px 14px">Сначала ребёнок выбирает, какое действие идёт первым, и только потом считает. Так видно, что именно не даётся: правило или счёт.</p>
+  <button class="big" id="playOrder">Начать</button>
+  <button class="ghost back">Назад</button>
 </section>
 
 <!-- ═══ ИГРА ═══ -->
@@ -228,13 +249,13 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     <div class="progress"><i id="pbar"></i></div>
     <div class="streak" id="streak"></div>
   </div>
-
+  <p class="ask" id="ask"></p>
   <div class="stage" id="stage">
+    <p class="step0" id="step0"></p>
     <p class="task" id="task">—</p>
     <div class="answer empty" id="answer"></div>
     <div class="verdict" id="verdict"></div>
   </div>
-
   <div class="pad" id="pad"></div>
   <div class="options hidden" id="options"></div>
 </section>
@@ -253,14 +274,24 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     <div class="mistakes" id="missList"></div>
   </div>
   <button class="big" id="again">Ещё раз</button>
-  <button class="ghost" id="repeatErr" style="margin-top:10px">Повторить ошибки</button>
-  <button class="ghost" id="home" style="margin-top:10px">В начало</button>
+  <button class="ghost" id="repeatErr">Повторить ошибки</button>
+  <button class="ghost back">В начало</button>
 </section>
 
-<!-- ═══ КАРТА ═══ -->
-<section id="mapView" class="hidden">
+<!-- ═══ СТИКЕРЫ ═══ -->
+<section id="stickers" class="hidden">
   <div class="card">
-    <h2>Карта знаний</h2>
+    <h2 id="stTitle">Награды</h2>
+    <p class="hint" id="stNext" style="margin:0 0 12px"></p>
+    <div class="sgrid" id="stGrid"></div>
+  </div>
+  <button class="ghost back">Назад</button>
+</section>
+
+<!-- ═══ УСПЕХИ ═══ -->
+<section id="progress" class="hidden">
+  <div class="card">
+    <h2>Карта таблицы</h2>
     <div class="map" id="mapGrid"></div>
     <div class="legend">
       <span><i style="background:#EDF2F7"></i>не пробовали</span>
@@ -270,352 +301,616 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     </div>
     <p class="hint" id="mapTotal"></p>
   </div>
-  <button class="ghost" id="mapBack">Назад</button>
-  <button class="ghost" id="reset" style="margin-top:10px; color:var(--no); border-color:#F0B6AF">Стереть прогресс</button>
+  <div class="card">
+    <h2>Мячи</h2>
+    <p class="hint" id="ballStats" style="margin:0"></p>
+  </div>
+  <div class="card">
+    <h2>Порядок действий</h2>
+    <div id="ordStats"></div>
+  </div>
+  <button class="ghost back">Назад</button>
+  <button class="ghost" id="reset" style="color:var(--no); border-color:#F0B6AF">Стереть прогресс</button>
 </section>
 
+<div class="wrap hidden" id="view">
+  <div class="in">
+    <div class="pic" id="vPic"></div>
+    <h3 id="vName"></h3>
+    <p id="vNeed"></p>
+    <div id="vActs">
+      <div class="row">
+        <button class="ghost" id="vSave" style="margin:0">Сохранить</button>
+        <button class="ghost" id="vShare" style="margin:0">Поделиться</button>
+      </div>
+    </div>
+    <button class="big" id="vClose">Закрыть</button>
+  </div>
+</div>
+
+<div class="wrap hidden" id="wrap">
+  <div class="in">
+    <div class="pic" id="wPic"></div>
+    <h3 id="wName"></h3>
+    <p id="wNeed"></p>
+    <button class="big" id="wOk">Забрать в команду</button>
+  </div>
+</div>
 </div>
 <script>
 'use strict';
 
-/* ── хранилище: localStorage, а если недоступен — память ── */
+/* ── хранилище ── */
 var mem = {};
 var store = {
-  get: function(k, d){
-    try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }
-    catch(e){ return (k in mem) ? mem[k] : d; }
-  },
-  set: function(k, v){
-    try { localStorage.setItem(k, JSON.stringify(v)); }
-    catch(e){ mem[k] = v; }
-  }
+  get:function(k,d){ try{ var v=localStorage.getItem(k); return v===null?d:JSON.parse(v); }catch(e){ return (k in mem)?mem[k]:d; } },
+  set:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){ mem[k]=v; } }
 };
+/* перенос старых ключей в своё пространство имён */
+(function migrate(){
+  if (store.get('umn:moved')) return;
+  ['cfg','facts'].forEach(function(k){
+    var old = store.get(k, null);
+    if (old !== null && store.get('umn:'+k, null) === null) store.set('umn:'+k, old);
+  });
+  store.set('umn:moved', 1);
+})();
 
 var $ = function(id){ return document.getElementById(id); };
 
-/* ── состояние ── */
-var cfg   = store.get('cfg', {mode:'mul', tables:[2,3,4,5,6,7,8,9], len:10, input:'type', sound:true});
-var facts = store.get('facts', {});          // "3x7" -> {c:верно, w:ошибок}
-var S = null;                                 // текущая сессия
+var cfg  = store.get('umn:cfg',  {mode:'mul', tables:[2,3,4,5,6,7,8,9], len:10, input:'type'});
+var cfg2 = store.get('umn:cfg2', {lvl:1, len:8});
+var facts = store.get('umn:facts', {});   // "3x7" -> {c,w}
+var ord   = store.get('umn:ord', {});     // шаблон -> {c,w,rc,rw}
+var ach = store.get('umn:ach', {c:0, o:0, best:0, days:[], sess:0, got:[], season:1});
+if(ach.o===undefined) ach.o=0;
+var S = null;
+var saveAch = function(){ store.set('umn:ach', ach); };
+var today = function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
+function known(){ var n=0,a,b; for(a=2;a<=9;a++) for(b=2;b<=9;b++){ if(mastered(stat(a,b))) n++; } return n; }
 
 /* ── звук ── */
-var actx = null;
-function beep(freq, dur, type){
-  if (!cfg.sound) return;
+var actx=null, snd = store.get('umn:snd', 1);
+function beep(f,dur,type){
+  if(!snd) return;
   try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    var o = actx.createOscillator(), g = actx.createGain();
-    o.type = type || 'sine'; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.0001, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.18, actx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(); o.stop(actx.currentTime + dur + 0.02);
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    var o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18,actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+dur+0.02);
   }catch(e){}
 }
-var sndOk   = function(){ beep(880,0.09); setTimeout(function(){beep(1320,0.12);},70); };
-var sndNo   = function(){ beep(190,0.22,'triangle'); };
-var sndDone = function(){ [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.14);}, i*110); }); };
+var sndOk=function(){ beep(880,.09); setTimeout(function(){beep(1320,.12);},70); };
+var sndNo=function(){ beep(190,.22,'triangle'); };
+var sndWin=function(){ [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,.14);}, i*110); }); };
 
-/* ── факты ── */
-function key(a,b){ return Math.min(a,b) + 'x' + Math.max(a,b); }
-function stat(a,b){ return facts[key(a,b)] || {c:0, w:0}; }
-function mark(a,b,good){
-  var k = key(a,b), f = facts[k] || {c:0, w:0};
-  if (good) f.c++; else f.w++;
-  facts[k] = f; store.set('facts', facts);
+/* ── тема 1: таблица ── */
+function key(a,b){ return Math.min(a,b)+'x'+Math.max(a,b); }
+function stat(a,b){ return facts[key(a,b)] || {c:0,w:0}; }
+function markFact(a,b,good){
+  var k=key(a,b), f=facts[k]||{c:0,w:0};
+  if(good) f.c++; else f.w++;
+  f.h = ((f.h||'')+(good?'1':'0')).slice(-5);   // последние 5 ответов
+  facts[k]=f; store.set('umn:facts',facts);
+}
+/* освоено: минимум 3 ответа и не больше одной ошибки из последних пяти */
+function mastered(f){
+  var h=f.h||'';
+  if(h.length<3) return false;
+  var w=0,i; for(i=0;i<h.length;i++) if(h[i]==='0') w++;
+  return w<=(h.length>=5?1:0);
+}
+function buildTable(){
+  var pool=[], i, b;
+  for(i=0;i<cfg.tables.length;i++){
+    var a=cfg.tables[i];
+    for(b=2;b<=9;b++){
+      var f=stat(a,b);
+      pool.push([a,b,Math.max(.15, 1+f.w*4-Math.min(f.c,6)*.14)]);
+    }
+  }
+  var total=0,j; for(j=0;j<pool.length;j++) total+=pool[j][2];
+  var r=Math.random()*total, pick=pool[0];
+  for(j=0;j<pool.length;j++){ r-=pool[j][2]; if(r<=0){ pick=pool[j]; break; } }
+  var a=pick[0]; b=pick[1];
+  var op = cfg.mode==='mix' ? (Math.random()<.5?'mul':'div') : cfg.mode;
+  if(op==='mul'){
+    if(Math.random()<.5){ var t=a; a=b; b=t; }
+    return {kind:'num',a:a,b:b,op:'mul',ans:a*b,text:a+' <em>×</em> '+b,plain:a+' × '+b+' = '+(a*b)};
+  }
+  if(op==='find')
+    return {kind:'num',a:a,b:b,op:'find',ans:b,
+            text:(a*b)+' <em>÷</em> <span class="blank"></span> <em>=</em> '+a,
+            plain:(a*b)+' ÷ '+b+' = '+a};
+  return {kind:'num',a:a,b:b,op:'div',ans:b,text:(a*b)+' <em>÷</em> '+a,plain:(a*b)+' ÷ '+a+' = '+b};
 }
 
-/* вес: чаще показываем то, где ошибались и что давно не встречалось */
-function weight(a,b){
-  var f = stat(a,b);
-  return 1 + f.w * 4 - Math.min(f.c, 6) * 0.14;
+/* ── тема 2: порядок действий ── */
+var R = function(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); };
+var PAT = {
+  mul_add:{lvl:1, lab:'a × b + c', make:function(){ var a=R(2,9),b=R(2,9),c=R(2,Math.min(40,100-a*b)); return c<2?null:{n:[a,b,c],o:['×','+'],br:null}; }},
+  mul_sub:{lvl:1, lab:'a × b − c', make:function(){ var a=R(2,9),b=R(2,9); return a*b<4?null:{n:[a,b,R(2,a*b-1)],o:['×','−'],br:null}; }},
+  add_mul:{lvl:1, lab:'c + a × b', make:function(){ var a=R(2,9),b=R(2,9),c=R(2,Math.min(40,100-a*b)); return c<2?null:{n:[c,a,b],o:['+','×'],br:null}; }},
+  sub_mul:{lvl:1, lab:'c − a × b', make:function(){ var a=R(2,9),b=R(2,9),p=a*b; return p>60?null:{n:[R(p+1,Math.min(100,p+40)),a,b],o:['−','×'],br:null}; }},
+  div_add:{lvl:1, lab:'q ÷ d + c', make:function(){ var d=R(2,9),k=R(2,9); return {n:[d*k,d,R(2,Math.min(40,90-k))],o:['÷','+'],br:null}; }},
+  sub_div:{lvl:1, lab:'c − q ÷ d', make:function(){ var d=R(2,9),k=R(2,9); return {n:[R(k+1,Math.min(90,k+40)),d*k,d],o:['−','÷'],br:null}; }},
+  br_add_mul:{lvl:2, lab:'(a + b) × c', make:function(){ var a=R(2,9),b=R(2,9),c=R(2,9); return (a+b)*c>100?null:{n:[a,b,c],o:['+','×'],br:0}; }},
+  br_sub_mul:{lvl:2, lab:'(a − b) × c', make:function(){ var a=R(4,9),b=R(2,a-1),c=R(2,9); return (a-b)*c>100?null:{n:[a,b,c],o:['−','×'],br:0}; }},
+  mul_br_add:{lvl:2, lab:'c × (a + b)', make:function(){ var a=R(2,9),b=R(2,9),c=R(2,9); return (a+b)*c>100?null:{n:[c,a,b],o:['×','+'],br:1}; }},
+  br_add_div:{lvl:2, lab:'(a + b) ÷ c', make:function(){ var c=R(2,9),k=R(2,9),s=c*k; if(s>72||s<6) return null; var a=R(Math.max(2,Math.floor(s*0.25)),Math.floor(s*0.75)); return {n:[a,s-a,c],o:['+','÷'],br:0}; }}
+};
+var prec = function(o){ return (o==='×'||o==='÷') ? 2 : 1; };
+function firstOp(e){ return e.br !== null ? e.br : (prec(e.o[0]) >= prec(e.o[1]) ? 0 : 1); }
+function apply(x,o,y){ return o==='×'?x*y : o==='÷'?x/y : o==='+'?x+y : x-y; }
+function exprText(e){
+  var n=e.n,o=e.o;
+  if(e.br===0) return '('+n[0]+' '+o[0]+' '+n[1]+') '+o[1]+' '+n[2];
+  if(e.br===1) return n[0]+' '+o[0]+' ('+n[1]+' '+o[1]+' '+n[2]+')';
+  return n[0]+' '+o[0]+' '+n[1]+' '+o[1]+' '+n[2];
+}
+function exprHTML(e){
+  var n=e.n,o=e.o;
+  var b=function(i){ return '<button class="op" data-i="'+i+'">'+o[i]+'</button>'; };
+  if(e.br===0) return '<span class="grp">('+n[0]+b(0)+n[1]+')</span>'+b(1)+n[2];
+  if(e.br===1) return n[0]+b(0)+'<span class="grp">('+n[1]+b(1)+n[2]+')</span>';
+  return n[0]+b(0)+n[1]+b(1)+n[2];
+}
+function buildOrder(){
+  var ids=[], id;
+  for(id in PAT) if(cfg2.lvl===3 || PAT[id].lvl===cfg2.lvl) ids.push(id);
+  /* чаще подкидываем шаблоны с ошибками */
+  var pool=[],t=0,i;
+  for(i=0;i<ids.length;i++){
+    var s=ord[ids[i]]||{c:0,w:0,rc:0,rw:0};
+    var w=1+(s.w+s.rw)*2.5-Math.min(s.c,6)*.1;
+    pool.push(Math.max(.2,w)); t+=pool[i];
+  }
+  var r=Math.random()*t, chosen=ids[0];
+  for(i=0;i<ids.length;i++){ r-=pool[i]; if(r<=0){ chosen=ids[i]; break; } }
+
+  var e=null, guard=0;
+  while(!e && guard++<80) e=PAT[chosen].make();
+  if(!e) e={n:[R(2,9),R(2,9),R(2,20)],o:['×','+'],br:null};
+
+  var f=firstOp(e), mid=apply(e.n[f], e.o[f], e.n[f+1]);
+  var rest = f===0 ? {n:[mid,e.n[2]],o:e.o[1]} : {n:[e.n[0],mid],o:e.o[0]};
+  var ans = apply(rest.n[0], rest.o, rest.n[1]);
+  return {kind:'order', id:chosen, e:e, first:f, mid:mid, rest:rest, ans:ans,
+          text:exprHTML(e), plain:exprText(e)+' = '+ans};
+}
+function markOrd(id, field){
+  var s = ord[id] || {c:0,w:0,rc:0,rw:0};
+  s[field]++; ord[id]=s; store.set('umn:ord',ord);
 }
 
-function buildQuestion(){
-  var pool = [];
-  for (var i = 0; i < cfg.tables.length; i++){
-    var a = cfg.tables[i];
-    for (var b = 2; b <= 9; b++) pool.push([a, b, Math.max(0.15, weight(a,b))]);
-  }
-  var total = 0, j;
-  for (j = 0; j < pool.length; j++) total += pool[j][2];
-  var r = Math.random() * total, pick = pool[0];
-  for (j = 0; j < pool.length; j++){ r -= pool[j][2]; if (r <= 0){ pick = pool[j]; break; } }
-
-  var a = pick[0], b = pick[1];
-  var op = cfg.mode === 'mix' ? (Math.random() < 0.5 ? 'mul' : 'div') : cfg.mode;
-
-  if (op === 'mul'){
-    if (Math.random() < 0.5){ var t = a; a = b; b = t; }
-    return {a:a, b:b, op:'mul', ans:a * b,
-            text:a + ' <em>×</em> ' + b,
-            plain:a + ' × ' + b + ' = ' + (a * b)};
-  }
-  if (op === 'find'){
-    // делитель спрятан, выбранное число стоит частным — ответы пробегают 2…9
-    return {a:a, b:b, op:'find', ans:b,
-            text:(a * b) + ' <em>÷</em> <span class="blank"></span> <em>=</em> ' + a,
-            plain:(a * b) + ' ÷ ' + b + ' = ' + a};
-  }
-  // выбранное число — всегда делитель, частное меняется
-  return {a:a, b:b, op:'div', ans:b,
-          text:(a * b) + ' <em>÷</em> ' + a,
-          plain:(a * b) + ' ÷ ' + a + ' = ' + b};
+/* ── стикеры ── */
+/* ── награды ── */
+var SEASON = 1;
+var STICK = [
+  {n:'Дебют',            b:25},
+  {n:'Первый мяч',       b:60},
+  {n:'В основе',         b:110},
+  {n:'Полузащита',       b:170},
+  {n:'Плеймейкер',       b:240},
+  {n:'Бомбардир',        b:310, m:30},
+  {n:'Диспетчер',        b:380, m:40, o:60},
+  {n:'Лидер атаки',      b:440, m:48, o:100},
+  {n:'Мастер поля',      b:470, m:56, o:140},
+  {n:'Капитан',          b:530, m:64, o:180}
+];
+/* прогресс к стикеру: доля по самому отстающему условию */
+function stParts(st){
+  var out=[{lab:'мячи', a:Math.min(ach.c,st.b), b:st.b}];
+  if(st.m) out.push({lab:'карта', a:Math.min(known(),st.m), b:st.m});
+  if(st.o) out.push({lab:'порядок действий', a:Math.min(ach.o,st.o), b:st.o});
+  return out;
 }
+function stReady(st){
+  var p=stParts(st),i;
+  for(i=0;i<p.length;i++) if(p[i].a<p[i].b) return false;
+  return true;
+}
+function stPct(st){
+  var p=stParts(st), min=1, i;
+  for(i=0;i<p.length;i++) min=Math.min(min, p[i].a/p[i].b);
+  return Math.round(min*100);
+}
+function stNeed(st){
+  return stParts(st).map(function(x){ return x.lab+' '+x.b; }).join(' · ');
+}
+function stFile(i){ return 'stickers/'+(i+1<10?'0':'')+(i+1)+'.png'; }
+function stImg(i, got){
+  return '<img src="'+(got?stFile(i):'stickers/locked.png')+'" alt="" onerror="this.style.display=\'none\'">';
+}
+function checkStickers(){
+  var fresh=[],i;
+  for(i=0;i<STICK.length;i++){
+    if(ach.got.indexOf(i)>-1) continue;
+    if(stReady(STICK[i])){ ach.got.push(i); fresh.push(i); }
+  }
+  if(fresh.length) saveAch();
+  return fresh;
+}
+function award(list){
+  if(!list.length) return false;
+  var i=list.shift();
+  $('wPic').innerHTML = stImg(i,true)+'<span>'+(i+1)+'</span>';
+  $('wName').textContent = STICK[i].n;
+  $('wNeed').textContent = stNeed(STICK[i]);
+  $('wrap').classList.remove('hidden');
+  sndWin();
+  $('wOk').onclick=function(){
+    $('wrap').classList.add('hidden');
+    if(!award(list)) show('result');
+  };
+  return true;
+}
+function paintStickers(){
+  var html='',i,next='';
+  for(i=0;i<STICK.length;i++){
+    var st=STICK[i], got=ach.got.indexOf(i)>-1;
+    html += '<div class="st'+(got?' got':' lock')+'" data-i="'+i+'">'
+          + '<div class="pic">'+stImg(i,got)+'<span>'+(i+1)+'</span></div>'
+          + '<b>'+(got?st.n:'Стикер '+(i+1))+'</b>'
+          + '<small>'+(got?'Открыт':stNeed(st))+'</small>'
+          + (got?'':'<div class="track"><i style="width:'+stPct(st)+'%"></i></div>')
+          + '</div>';
+    if(!got && !next){
+      next = stParts(st).map(function(x){ return x.lab+' '+x.a+'/'+x.b; }).join(' · ');
+    }
+  }
+  $('stGrid').innerHTML=html;
+  $('stTitle').textContent='Награды — '+ach.got.length+' из 10';
+  $('stNext').textContent = ach.got.length===10 ? 'Все награды сезона собраны!' : 'Следующая: '+next;
+}
+
+/* просмотр награды на весь экран */
+var viewIdx=-1;
+$('stGrid').addEventListener('click',function(e){
+  var c=e.target.closest('.st'); if(!c) return;
+  var i=+c.dataset.i, got=ach.got.indexOf(i)>-1;
+  viewIdx=i;
+  $('vPic').innerHTML = stImg(i,got)+'<span>'+(i+1)+'</span>';
+  $('vName').textContent = got ? STICK[i].n : 'Ещё не открыт';
+  $('vNeed').textContent = got ? stNeed(STICK[i]) : stParts(STICK[i]).map(function(x){ return x.lab+' '+x.a+'/'+x.b; }).join(' · ');
+  $('vActs').classList.toggle('hidden', !got);
+  $('view').classList.remove('hidden');
+});
+$('vClose').onclick=function(){ $('view').classList.add('hidden'); };
+
+/* карточка для сохранения и отправки */
+function makeCard(i, cb){
+  var W=800,H=1000, cv=document.createElement('canvas');
+  cv.width=W; cv.height=H;
+  var x=cv.getContext('2d');
+  x.fillStyle='#F4F8FC'; x.fillRect(0,0,W,H);
+  x.strokeStyle='#CFE2F3'; x.lineWidth=2;
+  for(var g=40;g<W;g+=40){ x.beginPath(); x.moveTo(g,0); x.lineTo(g,H); x.stroke(); }
+  for(g=40;g<H;g+=40){ x.beginPath(); x.moveTo(0,g); x.lineTo(W,g); x.stroke(); }
+  var img=new Image();
+  img.onload=img.onerror=function(){
+    if(img.width){
+      var mw=520, mh=Math.min(560, img.height*mw/img.width);
+      x.drawImage(img,(W-mw)/2,90,mw,mh);
+    }
+    x.textAlign='center';
+    x.fillStyle='#2C4CC8'; x.font='800 62px Segoe UI, sans-serif';
+    x.fillText(STICK[i].n, W/2, 760);
+    x.fillStyle='#1B2A3A'; x.font='700 34px Segoe UI, sans-serif';
+    x.fillText('Награда открыта!', W/2, 815);
+    x.fillStyle='#5A6E85'; x.font='400 28px Segoe UI, sans-serif';
+    x.fillText(stNeed(STICK[i]), W/2, 866);
+    x.fillText('Умножарий · сезон '+SEASON, W/2, 930);
+    cv.toBlob(function(bl){ cb(bl); }, 'image/png');
+  };
+  img.src=stFile(i);
+}
+$('vSave').onclick=function(){
+  makeCard(viewIdx,function(bl){
+    var u=URL.createObjectURL(bl), a=document.createElement('a');
+    a.href=u; a.download='umnozhariy-'+(viewIdx+1)+'.png'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(u); },4000);
+  });
+};
+$('vShare').onclick=function(){
+  makeCard(viewIdx,function(bl){
+    var f=new File([bl],'umnozhariy-'+(viewIdx+1)+'.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[f]}))
+      navigator.share({files:[f], text:'Открыта награда «'+STICK[viewIdx].n+'»'}).catch(function(){});
+    else $('vSave').click();
+  });
+};
 
 /* ── экраны ── */
+var SCREENS=['topics','setupTable','setupOrder','game','result','progress','stickers'];
 function show(id){
-  ['start','game','result','mapView'].forEach(function(s){ $(s).classList.toggle('hidden', s !== id); });
-  window.scrollTo(0, 0);
+  SCREENS.forEach(function(s){ $(s).classList.toggle('hidden', s!==id); });
+  window.scrollTo(0,0);
 }
+document.querySelectorAll('.back').forEach(function(b){ b.onclick=function(){ show('topics'); }; });
+document.querySelectorAll('.topic').forEach(function(b){
+  b.onclick=function(){
+    if(b.dataset.topic==='table'){ paintChips(); show('setupTable'); }
+    else { paintOrderChips(); show('setupOrder'); }
+  };
+});
 
-/* ── настройки ── */
-function paintChips(){
-  var i, el, els;
-  els = document.querySelectorAll('#modes .chip');
-  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', els[i].dataset.mode === cfg.mode);
-  els = document.querySelectorAll('#lengths .chip');
-  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', +els[i].dataset.len === cfg.len);
-  els = document.querySelectorAll('#inputs .chip');
-  for (i = 0; i < els.length; i++) els[i].setAttribute('aria-pressed', els[i].dataset.input === cfg.input);
-  els = document.querySelectorAll('#tables .chip');
-  for (i = 0; i < els.length; i++){
-    el = els[i];
-    el.setAttribute('aria-pressed', cfg.tables.indexOf(+el.dataset.t) > -1);
-  }
-  var n = cfg.tables.length ? cfg.tables[0] : 7;
-  $('tablesTitle').textContent = cfg.mode === 'div' ? 'Делим на эти числа'
-    : cfg.mode === 'mul' ? 'Умножаем на эти числа'
-    : cfg.mode === 'find' ? 'В ответе примера стоят эти числа' : 'Какие числа';
-  $('modeHint').innerHTML =
-      cfg.mode === 'mul'  ? 'Например: ' + n + ' × 6 = <b>' + (n * 6) + '</b>'
-    : cfg.mode === 'div'  ? 'Например: ' + (n * 6) + ' ÷ ' + n + ' = <b>6</b> — выбранное число стоит делителем.'
-    : cfg.mode === 'find' ? 'Например: ' + (n * 6) + ' ÷ <b>6</b> = ' + n + ' — делитель спрятан, его и надо найти.'
-    : 'Умножение и деление вперемешку.';
-  $('sound').textContent = cfg.sound ? 'Звук включён' : 'Звук выключен';
-  $('sound').setAttribute('aria-pressed', cfg.sound);
-  $('play').disabled = cfg.tables.length === 0;
-  $('play').style.opacity = cfg.tables.length ? 1 : .45;
-}
-
-(function initTables(){
-  var box = $('tables');
-  for (var n = 2; n <= 9; n++){
-    var b = document.createElement('button');
-    b.className = 'chip'; b.dataset.t = n; b.textContent = n;
-    box.appendChild(b);
-  }
+/* ── настройки таблицы ── */
+(function(){ var box=$('tables');
+  for(var n=2;n<=9;n++){ var b=document.createElement('button'); b.className='chip'; b.dataset.t=n; b.textContent=n; box.appendChild(b); }
 })();
-
-$('tables').addEventListener('click', function(e){
-  var b = e.target.closest('.chip'); if (!b) return;
-  var n = +b.dataset.t, i = cfg.tables.indexOf(n);
-  if (i > -1) cfg.tables.splice(i, 1); else cfg.tables.push(n);
-  cfg.tables.sort(function(x,y){ return x - y; });
-  store.set('cfg', cfg); paintChips();
+function paintChips(){
+  var i,els;
+  els=document.querySelectorAll('#modes .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', els[i].dataset.mode===cfg.mode);
+  els=document.querySelectorAll('#lengths .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', +els[i].dataset.len===cfg.len);
+  els=document.querySelectorAll('#inputs .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', els[i].dataset.input===cfg.input);
+  els=document.querySelectorAll('#tables .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', cfg.tables.indexOf(+els[i].dataset.t)>-1);
+  var n=cfg.tables.length?cfg.tables[0]:7;
+  $('tablesTitle').textContent = cfg.mode==='div'?'Делим на эти числа':cfg.mode==='mul'?'Умножаем на эти числа':cfg.mode==='find'?'В ответе примера стоят эти числа':'Какие числа';
+  $('modeHint').innerHTML = cfg.mode==='mul'?'Например: '+n+' × 6 = <b>'+(n*6)+'</b>'
+    : cfg.mode==='div'?'Например: '+(n*6)+' ÷ '+n+' = <b>6</b> — выбранное число стоит делителем.'
+    : cfg.mode==='find'?'Например: '+(n*6)+' ÷ <b>6</b> = '+n+' — делитель спрятан, его и надо найти.'
+    : 'Умножение и деление вперемешку.';
+  $('playTable').disabled = !cfg.tables.length;
+  $('playTable').style.opacity = cfg.tables.length?1:.45;
+}
+$('tables').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  var n=+b.dataset.t, i=cfg.tables.indexOf(n);
+  if(i>-1) cfg.tables.splice(i,1); else cfg.tables.push(n);
+  cfg.tables.sort(function(x,y){return x-y;}); store.set('umn:cfg',cfg); paintChips();
 });
-$('allTables').onclick = function(){ cfg.tables = [2,3,4,5,6,7,8,9]; store.set('cfg', cfg); paintChips(); };
-$('hardTables').onclick = function(){
-  var score = {};
-  for (var n = 2; n <= 9; n++){
-    score[n] = 0;
-    for (var b = 2; b <= 9; b++){ var f = stat(n,b); score[n] += f.w * 2 - Math.min(f.c,4) * 0.2; }
-  }
-  var order = [2,3,4,5,6,7,8,9].sort(function(x,y){ return score[y] - score[x]; });
-  var hard = order.slice(0,4).sort(function(x,y){ return x - y; });
-  var any = hard.some(function(n){ return score[n] > 0; });
-  cfg.tables = any ? hard : [6,7,8,9];
-  $('hardHint').textContent = any
-    ? 'Выбрали числа с наибольшим числом ошибок: ' + cfg.tables.join(', ') + '.'
-    : 'Ошибок пока не записано — взяли самые каверзные: 6, 7, 8, 9.';
-  store.set('cfg', cfg); paintChips();
+$('allTables').onclick=function(){ cfg.tables=[2,3,4,5,6,7,8,9]; store.set('umn:cfg',cfg); paintChips(); };
+$('hardTables').onclick=function(){
+  var sc={},n,b;
+  for(n=2;n<=9;n++){ sc[n]=0; for(b=2;b<=9;b++){ var f=stat(n,b); sc[n]+=f.w*2-Math.min(f.c,4)*.2; } }
+  var order=[2,3,4,5,6,7,8,9].sort(function(x,y){return sc[y]-sc[x];});
+  var hard=order.slice(0,4).sort(function(x,y){return x-y;});
+  var any=hard.some(function(k){return sc[k]>0;});
+  cfg.tables = any?hard:[6,7,8,9];
+  $('hardHint').textContent = any ? 'Взяли числа с наибольшим числом ошибок: '+cfg.tables.join(', ')+'.'
+                                  : 'Ошибок пока не записано — взяли самые каверзные: 6, 7, 8, 9.';
+  store.set('umn:cfg',cfg); paintChips();
 };
-$('modes').addEventListener('click', function(e){
-  var b = e.target.closest('.chip'); if (!b) return;
-  cfg.mode = b.dataset.mode; store.set('cfg', cfg); paintChips();
+['modes','lengths','inputs'].forEach(function(box){
+  $(box).addEventListener('click',function(e){
+    var b=e.target.closest('.chip'); if(!b) return;
+    if(box==='modes') cfg.mode=b.dataset.mode;
+    if(box==='lengths') cfg.len=+b.dataset.len;
+    if(box==='inputs') cfg.input=b.dataset.input;
+    store.set('umn:cfg',cfg); paintChips();
+  });
 });
-$('lengths').addEventListener('click', function(e){
-  var b = e.target.closest('.chip'); if (!b) return;
-  cfg.len = +b.dataset.len; store.set('cfg', cfg); paintChips();
+
+/* ── настройки порядка действий ── */
+function paintOrderChips(){
+  var i,els;
+  els=document.querySelectorAll('#levels .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', +els[i].dataset.lvl===cfg2.lvl);
+  els=document.querySelectorAll('#lengths2 .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', +els[i].dataset.len===cfg2.len);
+  $('lvlHint').innerHTML = cfg2.lvl===1 ? 'Например: 18 − 2 × 6. Правило одно: умножение и деление раньше сложения и вычитания.'
+    : cfg2.lvl===2 ? 'Например: (4 + 3) × 5. Скобки главнее всего.'
+    : 'Со скобками и без — вперемешку.';
+}
+$('levels').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  cfg2.lvl=+b.dataset.lvl; store.set('umn:cfg2',cfg2); paintOrderChips();
 });
-$('inputs').addEventListener('click', function(e){
-  var b = e.target.closest('.chip'); if (!b) return;
-  cfg.input = b.dataset.input; store.set('cfg', cfg); paintChips();
+$('lengths2').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  cfg2.len=+b.dataset.len; store.set('umn:cfg2',cfg2); paintOrderChips();
 });
-$('sound').onclick = function(){ cfg.sound = !cfg.sound; store.set('cfg', cfg); paintChips(); if (cfg.sound) beep(880,0.08); };
 
 /* ── клавиатура ── */
-(function initPad(){
-  var pad = $('pad'), labels = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
-  labels.forEach(function(l){
-    var b = document.createElement('button');
-    b.className = 'key' + (l === '✓' ? ' go' : l === '⌫' ? ' del' : '');
-    b.textContent = l; b.dataset.k = l;
-    pad.appendChild(b);
+(function(){ var pad=$('pad');
+  ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(function(l){
+    var b=document.createElement('button');
+    b.className='key'+(l==='✓'?' go':l==='⌫'?' del':'');
+    b.textContent=l; b.dataset.k=l; pad.appendChild(b);
   });
 })();
-
-$('pad').addEventListener('click', function(e){
-  var b = e.target.closest('.key'); if (!b) return;
-  var k = b.dataset.k;
-  if (k === '⌫') typeIn(null);
-  else if (k === '✓') submit(S.typed === '' ? null : +S.typed);
-  else typeIn(k);
+$('pad').addEventListener('click',function(e){
+  var b=e.target.closest('.key'); if(!b) return;
+  var k=b.dataset.k;
+  if(k==='⌫') typeIn(null); else if(k==='✓') submit(S.typed===''?null:+S.typed); else typeIn(k);
 });
-$('options').addEventListener('click', function(e){
-  var b = e.target.closest('.opt'); if (!b) return;
-  submit(+b.dataset.v);
+$('options').addEventListener('click',function(e){
+  var b=e.target.closest('.opt'); if(!b) return; submit(+b.dataset.v);
 });
-document.addEventListener('keydown', function(e){
-  if ($('game').classList.contains('hidden') || cfg.input !== 'type') return;
-  if (e.key >= '0' && e.key <= '9') typeIn(e.key);
-  else if (e.key === 'Backspace') typeIn(null);
-  else if (e.key === 'Enter') submit(S.typed === '' ? null : +S.typed);
+$('task').addEventListener('click',function(e){
+  var b=e.target.closest('.op'); if(!b || !S || S.phase!=='pick' || S.locked) return;
+  pickOp(+b.dataset.i, b);
 });
-
+document.addEventListener('keydown',function(e){
+  if($('game').classList.contains('hidden') || S.phase==='pick' || cfg.input!=='type') return;
+  if(e.key>='0'&&e.key<='9') typeIn(e.key);
+  else if(e.key==='Backspace') typeIn(null);
+  else if(e.key==='Enter') submit(S.typed===''?null:+S.typed);
+});
 function typeIn(d){
-  if (S.locked) return;
-  if (d === null) S.typed = S.typed.slice(0, -1);
-  else if (S.typed.length < 2) S.typed += d;
+  if(S.locked) return;
+  if(d===null) S.typed=S.typed.slice(0,-1);
+  else if(S.typed.length<3) S.typed+=d;
   paintAnswer();
 }
 function paintAnswer(){
-  var blank = document.querySelector('#task .blank');
-  if (blank){ blank.textContent = S.typed; return; }   // в режиме «Найди делитель» пишем в пропуск
-  var a = $('answer');
-  if (S.typed === ''){ a.className = 'answer empty'; a.textContent = ''; }
-  else { a.className = 'answer'; a.innerHTML = S.typed + '<span class="caret"></span>'; }
+  var blank=document.querySelector('#task .blank');
+  if(blank){ blank.textContent=S.typed; return; }
+  var a=$('answer');
+  if(S.typed===''){ a.className='answer empty'; a.textContent=''; }
+  else { a.className='answer'; a.innerHTML=S.typed+'<span class="caret"></span>'; }
 }
 
-/* ── игровой цикл ── */
-function startSession(queue){
-  S = {i:0, right:0, streak:0, best:0, typed:'', locked:false,
-       mistakes:[], t0:Date.now(), queue:queue || null,
-       total:queue ? queue.length : cfg.len};
-  show('game');
-  nextQuestion();
+/* ── сессия ── */
+function startSession(topic, queue){
+  if(ach.days.indexOf(today())===-1){ ach.days.push(today()); saveAch(); }
+  S={topic:topic, i:0, right:0, streak:0, best:0, typed:'', locked:false, phase:'calc',
+     count:(topic==='order' || cfg.input==='type'),
+     mistakes:[], t0:Date.now(), queue:queue||null,
+     total: queue ? queue.length : (topic==='table'?cfg.len:cfg2.len)};
+  show('game'); nextQuestion();
 }
-
 function nextQuestion(){
-  if (S.i >= S.total) return finish();
-  S.q = S.queue ? S.queue[S.i] : buildQuestion();
-  S.typed = ''; S.locked = false;
+  if(S.i>=S.total) return finish();
+  S.q = S.queue ? S.queue[S.i] : (S.topic==='table' ? buildTable() : buildOrder());
+  S.typed=''; S.locked=false;
+  S.phase = S.q.kind==='order' ? 'pick' : 'calc';
   $('task').innerHTML = S.q.text;
   $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
-  $('verdict').textContent = ''; $('verdict').className = 'verdict';
-  $('stage').className = 'stage';
-  $('pbar').style.width = (S.i / S.total * 100) + '%';
-  $('streak').textContent = S.streak >= 3 ? '🔥 ' + S.streak : '';
+  $('step0').textContent='';
+  $('verdict').textContent=''; $('verdict').className='verdict';
+  $('stage').className='stage';
+  $('pbar').style.width=(S.i/S.total*100)+'%';
+  $('streak').textContent = S.streak>=3 ? '🔥 '+S.streak : '';
   paintAnswer();
-
-  var typing = cfg.input === 'type';
-  $('pad').classList.toggle('hidden', !typing);
-  $('options').classList.toggle('hidden', typing);
-  $('answer').style.display = (typing && S.q.op !== 'find') ? 'flex' : 'none';
-  if (!typing) paintOptions(S.q.ans);
+  layout();
+}
+function layout(){
+  var pick = S.phase==='pick';
+  var typing = S.topic==='order' ? true : cfg.input==='type';
+  $('ask').textContent = pick ? 'Какое действие считаем первым?' : '';
+  $('pad').classList.toggle('hidden', pick || !typing);
+  $('options').classList.toggle('hidden', pick || typing);
+  $('answer').style.display = (!pick && typing && S.q.op!=='find') ? 'flex' : 'none';
+  if(!pick && !typing) paintOptions(S.q.ans);
+}
+function paintOptions(ans){
+  var set=[ans], guard=0;
+  while(set.length<4 && guard++<200){
+    var d = S.q.op==='mul' ? ans+R(-5,5) : R(2,9);
+    if(d>0 && set.indexOf(d)===-1) set.push(d);
+  }
+  set.sort(function(){ return Math.random()-.5; });
+  $('options').innerHTML = set.map(function(v){ return '<button class="opt" data-v="'+v+'">'+v+'</button>'; }).join('');
 }
 
-function paintOptions(ans){
-  var set = [ans], tries = 0;
-  while (set.length < 4 && tries++ < 200){
-    var d = ans + (Math.floor(Math.random() * 11) - 5);
-    if (S.q.op !== 'mul') d = 2 + Math.floor(Math.random() * 8);
-    if (d > 0 && set.indexOf(d) === -1) set.push(d);
+/* шаг 1: выбор действия */
+function pickOp(i, btn){
+  if(i===S.q.first){
+    markOrd(S.q.id, S.picked ? 'rw' : 'rc');
+    btn.classList.add('done');
+    beep(760,.08);
+    S.locked=true;
+    setTimeout(function(){
+      var e=S.q.e, f=S.q.first;
+      $('step0').textContent = exprText(e);
+      $('task').innerHTML = S.q.rest.n[0]+' <em>'+S.q.rest.o+'</em> '+S.q.rest.n[1];
+      $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
+      $('verdict').textContent='';
+      S.phase='calc'; S.locked=false; S.typed=''; paintAnswer(); layout();
+    }, 420);
+  } else {
+    if(!S.picked){ S.picked=true; }
+    $('verdict').className='verdict no';
+    $('verdict').textContent = S.q.e.br!==null ? 'Сначала то, что в скобках' : 'Умножение и деление — раньше сложения и вычитания';
+    sndNo();
   }
-  set.sort(function(){ return Math.random() - 0.5; });
-  $('options').innerHTML = set.map(function(v){
-    return '<button class="opt" data-v="' + v + '">' + v + '</button>';
-  }).join('');
 }
 
 function submit(val){
-  if (S.locked || val === null || isNaN(val)) return;
-  S.locked = true;
-  var good = val === S.q.ans;
-  mark(S.q.a, S.q.b, good);
+  if(S.locked || S.phase==='pick' || val===null || isNaN(val)) return;
+  S.locked=true;
+  var good = val===S.q.ans;
+  if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else markOrd(S.q.id, good?'c':'w');
 
-  if (good){
-    S.right++; S.streak++; S.best = Math.max(S.best, S.streak);
-    $('stage').className = 'stage ok';
-    $('verdict').className = 'verdict ok';
-    $('verdict').textContent = S.streak >= 5 ? 'Подряд ' + S.streak + '!' : 'Верно';
+  if(good){
+    S.right++; S.streak++; S.best=Math.max(S.best,S.streak);
+    if(S.count){
+      var pts = S.topic==='order' ? 2 : 1;
+      ach.c += pts;
+      if(S.topic==='order') ach.o += pts;
+      if(S.streak>ach.best) ach.best=S.streak;
+      saveAch();
+    }
+    $('stage').className='stage ok';
+    $('verdict').className='verdict ok';
+    $('verdict').textContent = S.streak>=5 ? 'Подряд '+S.streak+'!' : 'Верно';
     sndOk();
   } else {
-    S.streak = 0;
-    S.mistakes.push(S.q);
-    $('stage').className = 'stage no';
-    $('verdict').className = 'verdict no';
-    $('verdict').innerHTML = 'Правильный ответ — <b>' + S.q.ans + '</b>';
-    if (cfg.input === 'type'){ $('answer').className = 'answer'; $('answer').textContent = val; }
+    S.streak=0; S.mistakes.push(S.q);
+    $('stage').className='stage no';
+    $('verdict').className='verdict no';
+    $('verdict').innerHTML='Правильный ответ — <b>'+S.q.ans+'</b>';
+    if($('answer').style.display!=='none'){ $('answer').className='answer'; $('answer').textContent=val; }
     sndNo();
   }
-  S.i++;
-  $('pbar').style.width = (S.i / S.total * 100) + '%';
-  setTimeout(nextQuestion, good ? 550 : 1500);
+  S.picked=false;
+  S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
+  setTimeout(nextQuestion, good?550:1600);
 }
 
 function finish(){
-  var sec = Math.round((Date.now() - S.t0) / 1000);
-  var pct = S.total ? S.right / S.total : 0;
-  var n = pct >= 0.95 ? 3 : pct >= 0.8 ? 2 : pct >= 0.6 ? 1 : 0;
-  $('stars').textContent = '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n);
-  $('rScore').textContent = S.right + '/' + S.total;
-  $('rTime').textContent = 'за ' + Math.floor(sec / 60) + ' мин ' + (sec % 60) + ' с'
-    + (S.best >= 3 ? ' · лучшая серия ' + S.best : '');
-  var box = $('missBox');
-  if (S.mistakes.length){
+  var sec=Math.round((Date.now()-S.t0)/1000);
+  var pct=S.total?S.right/S.total:0;
+  var n=pct>=.95?3:pct>=.8?2:pct>=.6?1:0;
+  $('stars').textContent='★★★'.slice(0,n)+'☆☆☆'.slice(0,3-n);
+  $('rScore').textContent=S.right+'/'+S.total;
+  $('rTime').textContent='за '+Math.floor(sec/60)+' мин '+(sec%60)+' с'+(S.best>=3?' · лучшая серия '+S.best:'');
+  var box=$('missBox');
+  if(S.mistakes.length){
     box.classList.remove('hidden');
-    $('missList').innerHTML = S.mistakes.map(function(q){
-      return '<span class="miss">' + q.plain + '</span>';
-    }).join('');
+    $('missList').innerHTML=S.mistakes.map(function(q){ return '<span class="miss">'+q.plain+'</span>'; }).join('');
   } else box.classList.add('hidden');
-  $('repeatErr').classList.toggle('hidden', S.mistakes.length === 0);
-  if (n === 3) sndDone(); else beep(660, 0.15);
+  $('repeatErr').classList.toggle('hidden', S.mistakes.length===0);
+  ach.sess++; saveAch();
+  var fresh = S.count ? checkStickers() : [];
+  if(fresh.length){ show('result'); award(fresh); return; }
+  if(n===3) sndWin(); else beep(660,.15);
   show('result');
 }
+$('playTable').onclick=function(){ startSession('table',null); };
+$('playOrder').onclick=function(){ startSession('order',null); };
+$('again').onclick=function(){ startSession(S.topic,null); };
+$('repeatErr').onclick=function(){ startSession(S.topic, S.mistakes.slice()); };
+$('quit').onclick=function(){ show('topics'); };
 
-$('play').onclick   = function(){ startSession(null); };
-$('again').onclick  = function(){ startSession(null); };
-$('home').onclick   = function(){ paintChips(); show('start'); };
-$('quit').onclick   = function(){ show('start'); };
-$('repeatErr').onclick = function(){ startSession(S.mistakes.slice()); };
-
-/* ── карта знаний ── */
-function paintMap(){
-  var g = $('mapGrid'), html = '<div class="hd">×</div>', a, b;
-  for (b = 2; b <= 9; b++) html += '<div class="hd">' + b + '</div>';
-  var known = 0;
-  for (a = 2; a <= 9; a++){
-    html += '<div class="hd">' + a + '</div>';
-    for (b = 2; b <= 9; b++){
-      var f = stat(a,b), n = f.c + f.w, bg = '#EDF2F7', fg = 'var(--ink)';
-      if (n > 0){
-        var rate = f.c / n, lvl = rate * Math.min(1, f.c / 3);
-        if (lvl >= 0.85){ bg = '#128C5A'; fg = '#fff'; known++; }
-        else if (lvl >= 0.5) bg = '#B7E4CD';
-        else bg = '#F7E0A8';
+/* ── успехи ── */
+function paintProgress(){
+  var html='<div class="hd">×</div>', a,b,known=0;
+  for(b=2;b<=9;b++) html+='<div class="hd">'+b+'</div>';
+  for(a=2;a<=9;a++){
+    html+='<div class="hd">'+a+'</div>';
+    for(b=2;b<=9;b++){
+      var f=stat(a,b), n=f.c+f.w, bg='#EDF2F7', fg='var(--ink)';
+      if(n>0){
+        if(mastered(f)){ bg='#128C5A'; fg='#fff'; known++; }
+        else if(f.c>f.w) bg='#B7E4CD'; else bg='#F7E0A8';
       }
-      html += '<div style="background:' + bg + ';color:' + fg + '">' + (a * b) + '</div>';
+      html+='<div style="background:'+bg+';color:'+fg+'">'+(a*b)+'</div>';
     }
   }
-  g.innerHTML = html;
-  $('mapTotal').textContent = 'Освоено ' + known + ' из 64 примеров. Клетка зеленеет после трёх верных ответов подряд по этой паре.';
+  $('mapGrid').innerHTML=html;
+  $('ballStats').textContent = 'Всего '+ach.c+' мячей, из них '+ach.o+' за порядок действий. '
+    + 'Тренировок: '+ach.sess+', дней: '+ach.days.length+', лучшая серия: '+ach.best+'.';
+  $('mapTotal').textContent='Освоено '+known+' из 64 примеров. Клетка зеленеет, когда из последних пяти ответов по ней не больше одной ошибки.';
+
+  var rows='', id, any=false;
+  for(id in PAT){
+    var s=ord[id]; if(!s) continue;
+    any=true;
+    var rt=s.rc+s.rw, ct=s.c+s.w;
+    var pr=rt?Math.round(s.rc/rt*100):0, pc=ct?Math.round(s.c/ct*100):0;
+    rows+='<div class="prow"><div class="lab"><span>'+PAT[id].lab+'</span>'
+        + '<span>правило '+pr+'% · счёт '+pc+'%</span></div>'
+        + '<div class="track"><i style="width:'+Math.round((pr+pc)/2)+'%"></i></div></div>';
+  }
+  $('ordStats').innerHTML = any ? rows
+    : '<p class="hint" style="margin:0">Пока пусто. «Правило» — как часто верно выбрано первое действие, «счёт» — верен ли ответ.</p>';
 }
-$('toMap').onclick   = function(){ paintMap(); show('mapView'); };
-$('mapBack').onclick = function(){ show('start'); };
-$('reset').onclick   = function(){
-  if (!confirm('Стереть всю статистику и карту знаний?')) return;
-  facts = {}; store.set('facts', facts); paintMap();
+$('toProgress').onclick=function(){ paintProgress(); show('progress'); };
+$('toStickers').onclick=function(){ paintStickers(); show('stickers'); };
+$('reset').onclick=function(){
+  if(!confirm('Стереть всю статистику по обеим темам?')) return;
+  facts={}; ord={}; ach={c:0,o:0,best:0,days:[],sess:0,got:[],season:1};
+  store.set('umn:facts',facts); store.set('umn:ord',ord); saveAch(); paintProgress();
 };
 
-paintChips();
+paintChips(); paintOrderChips();
 
-/* регистрация service worker: работает только по https, локально молча пропускаем */
-if ('serviceWorker' in navigator && location.protocol === 'https:'){
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  });
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 }
 </script>
 </body>
