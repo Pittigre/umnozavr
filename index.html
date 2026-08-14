@@ -248,7 +248,22 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     <p class="hint" style="margin:0">Урок идёт полностью на немецком — с теми обозначениями, которые в школьной тетради: U, A, a, b, cm, cm².</p>
   </div>
   <button class="big" id="toLesson">Урок</button>
-  <button class="ghost" disabled style="opacity:.5">Тренировка — скоро</button>
+  <div class="card">
+    <h2>Тренировка</h2>
+    <div class="chips" id="glev">
+      <button class="chip wide" data-g="1" aria-pressed="true">Umfang</button>
+      <button class="chip wide" data-g="2" aria-pressed="false">Flächeninhalt</button>
+      <button class="chip wide" data-g="3" aria-pressed="false">U и A вместе</button>
+      <button class="chip wide" data-g="4" aria-pressed="false">Обратные задачи</button>
+    </div>
+    <p class="hint" id="gHint"></p>
+    <div class="chips" id="glen" style="margin-top:10px">
+      <button class="chip" data-len="8" aria-pressed="true">8</button>
+      <button class="chip" data-len="12" aria-pressed="false">12</button>
+      <button class="chip" data-len="20" aria-pressed="false">20</button>
+    </div>
+  </div>
+  <button class="big" id="playGeo">Тренировка</button>
   <button class="ghost back">Назад</button>
 </section>
 
@@ -285,6 +300,7 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
   <p class="ask" id="ask"></p>
   <div class="stage" id="stage">
     <p class="step0" id="step0"></p>
+    <div id="gPic" class="hidden" style="margin-bottom:8px"></div>
     <p class="task" id="task">—</p>
     <div class="answer empty" id="answer"></div>
     <div class="verdict" id="verdict"></div>
@@ -343,7 +359,43 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     <div id="ordStats"></div>
   </div>
   <button class="ghost back">Назад</button>
-  <button class="ghost" id="reset" style="color:var(--no); border-color:#F0B6AF">Стереть прогресс</button>
+  <button class="ghost" id="toParent">Für Eltern</button>
+</section>
+
+<!-- ═══ РОДИТЕЛЬСКИЙ РАЗДЕЛ ═══ -->
+<section id="parent" class="hidden">
+  <div class="card" id="pinBox">
+    <h2 id="pinTitle">Родительский код</h2>
+    <p class="hint" id="pinHint" style="margin:0 0 10px"></p>
+    <div class="answer" id="pinDots" style="height:44px; font-size:34px; letter-spacing:10px"></div>
+    <div class="pad" id="pinPad" style="margin-top:8px"></div>
+  </div>
+  <div id="pBody" class="hidden">
+    <div class="card">
+      <h2>Резервная копия</h2>
+      <p class="hint" id="bakInfo" style="margin:0 0 10px"></p>
+      <button class="ghost" id="bakRestore" style="margin:0">Откатить к последней копии</button>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" id="bakSave" style="margin:0">Сохранить в файл</button>
+        <button class="ghost" id="bakLoad" style="margin:0">Загрузить файл</button>
+      </div>
+      <input type="file" id="bakFile" accept="application/json" style="display:none">
+    </div>
+    <div class="card">
+      <h2>Прогресс вручную</h2>
+      <div class="row"><button class="ghost" data-p="c-" style="margin:0">мячи −10</button><button class="ghost" data-p="c+" style="margin:0">мячи +10</button></div>
+      <div class="row" style="margin-top:8px"><button class="ghost" data-p="o-" style="margin:0">порядок −10</button><button class="ghost" data-p="o+" style="margin:0">порядок +10</button></div>
+      <div class="row" style="margin-top:8px"><button class="ghost" data-p="g-" style="margin:0">геометрия −10</button><button class="ghost" data-p="g+" style="margin:0">геометрия +10</button></div>
+      <div class="row" style="margin-top:8px"><button class="ghost" data-p="s-" style="margin:0">награда −1</button><button class="ghost" data-p="s+" style="margin:0">награда +1</button></div>
+      <p class="hint" id="pStat" style="margin:10px 0 0"></p>
+    </div>
+    <div class="card">
+      <h2>Опасная зона</h2>
+      <button class="ghost" id="reset" style="margin:0; color:var(--no); border-color:#F0B6AF">Стереть прогресс</button>
+      <button class="ghost" id="pinChange" style="margin-top:8px">Сменить код</button>
+    </div>
+  </div>
+  <button class="ghost back">Назад</button>
 </section>
 
 <div class="wrap hidden" id="view">
@@ -395,8 +447,11 @@ var cfg  = store.get('umn:cfg',  {mode:'mul', tables:[2,3,4,5,6,7,8,9], len:10, 
 var cfg2 = store.get('umn:cfg2', {lvl:1, len:8});
 var facts = store.get('umn:facts', {});   // "3x7" -> {c,w}
 var ord   = store.get('umn:ord', {});     // шаблон -> {c,w,rc,rw}
-var ach = store.get('umn:ach', {c:0, o:0, best:0, days:[], sess:0, got:[], season:1});
+var ach = store.get('umn:ach', {c:0, o:0, g:0, best:0, days:[], sess:0, got:[], season:1, cap:{d:'',n:0}});
 if(ach.o===undefined) ach.o=0;
+if(ach.g===undefined) ach.g=0;
+if(!ach.cap) ach.cap={d:'',n:0};
+var DAY_CAP = 80;
 var S = null;
 var saveAch = function(){ store.set('umn:ach', ach); };
 var today = function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
@@ -426,15 +481,32 @@ function stat(a,b){ return facts[key(a,b)] || {c:0,w:0}; }
 function markFact(a,b,good){
   var k=key(a,b), f=facts[k]||{c:0,w:0};
   if(good) f.c++; else f.w++;
-  f.h = ((f.h||'')+(good?'1':'0')).slice(-5);   // последние 5 ответов
+  f.h = ((f.h||'')+(good?'1':'0')).slice(-5);
+  f.d = f.d || [];
+  if(good){
+    var t=today();
+    if(f.d.indexOf(t)===-1) f.d.push(t);        // засчитываем день
+  } else if(f.d.length){
+    f.d.pop();                                   // ошибка снимает последний день
+  }
   facts[k]=f; store.set('umn:facts',facts);
 }
-/* освоено: минимум 3 ответа и не больше одной ошибки из последних пяти */
+/* освоено: верные ответы в три разных дня и не больше одной ошибки из последних пяти */
 function mastered(f){
-  var h=f.h||'';
-  if(h.length<3) return false;
-  var w=0,i; for(i=0;i<h.length;i++) if(h[i]==='0') w++;
-  return w<=(h.length>=5?1:0);
+  if(!f.d || f.d.length<3) return false;
+  var h=f.h||'', w=0, i;
+  for(i=0;i<h.length;i++) if(h[i]==='0') w++;
+  return w<=1;
+}
+/* пары, которым не хватает дня — подмешиваем их в каждый четвёртый пример */
+function needDay(){
+  var out=[],a,b;
+  for(a=2;a<=9;a++) for(b=a;b<=9;b++){
+    if(cfg.tables.indexOf(a)===-1 && cfg.tables.indexOf(b)===-1) continue;
+    var f=stat(a,b);
+    if(!mastered(f) && f.d && f.d.length && f.d.indexOf(today())===-1) out.push([a,b]);
+  }
+  return out;
 }
 function buildTable(){
   var pool=[], i, b;
@@ -449,6 +521,10 @@ function buildTable(){
   var r=Math.random()*total, pick=pool[0];
   for(j=0;j<pool.length;j++){ r-=pool[j][2]; if(r<=0){ pick=pool[j]; break; } }
   var a=pick[0]; b=pick[1];
+  if(Math.random()<.25){
+    var nd=needDay();
+    if(nd.length){ var q=nd[Math.floor(Math.random()*nd.length)]; a=q[0]; b=q[1]; }
+  }
   var op = cfg.mode==='mix' ? (Math.random()<.5?'mul':'div') : cfg.mode;
   if(op==='mul'){
     if(Math.random()<.5){ var t=a; a=b; b=t; }
@@ -523,22 +599,23 @@ function markOrd(id, field){
 /* ── награды ── */
 var SEASON = 1;
 var STICK = [
-  {n:'Дебют',            b:25},
-  {n:'Первый мяч',       b:60},
-  {n:'В основе',         b:110},
-  {n:'Полузащита',       b:170},
-  {n:'Плеймейкер',       b:240},
-  {n:'Бомбардир',        b:310, m:30},
-  {n:'Диспетчер',        b:380, m:40, o:60},
-  {n:'Лидер атаки',      b:440, m:48, o:100},
-  {n:'Мастер поля',      b:470, m:56, o:140},
-  {n:'Капитан',          b:530, m:64, o:180}
+  {n:'Дебют',       b:25},
+  {n:'Первый мяч',  b:60},
+  {n:'В основе',    b:110},
+  {n:'Полузащита',  b:170},
+  {n:'Плеймейкер',  b:240},
+  {n:'Бомбардир',   b:310, o:60},
+  {n:'Диспетчер',   b:380, o:100},
+  {n:'Лидер атаки', b:440, o:120},
+  {n:'Мастер поля', b:800,  m:56, o:260, g:60},
+  {n:'Капитан',     b:1300, m:64, o:380, g:140}
 ];
 /* прогресс к стикеру: доля по самому отстающему условию */
 function stParts(st){
   var out=[{lab:'мячи', a:Math.min(ach.c,st.b), b:st.b}];
   if(st.m) out.push({lab:'карта', a:Math.min(known(),st.m), b:st.m});
   if(st.o) out.push({lab:'порядок действий', a:Math.min(ach.o,st.o), b:st.o});
+  if(st.g) out.push({lab:'геометрия', a:Math.min(ach.g,st.g), b:st.g});
   return out;
 }
 function stReady(st){
@@ -658,8 +735,49 @@ $('vShare').onclick=function(){
   });
 };
 
+
+/* ── тема 3: периметр и площадь ── */
+var cfg3 = store.get('umn:cfg3', {lvl:1, len:8});
+function paintGeoChips(){
+  var i,els;
+  els=document.querySelectorAll('#glev .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', +els[i].dataset.g===cfg3.lvl);
+  els=document.querySelectorAll('#glen .chip'); for(i=0;i<els.length;i++) els[i].setAttribute('aria-pressed', +els[i].dataset.len===cfg3.len);
+  $('gHint').innerHTML = cfg3.lvl===1 ? 'Wie groß ist der Umfang? — считаем путь вокруг поля.'
+    : cfg3.lvl===2 ? 'Wie groß ist der Flächeninhalt? — считаем квадраты внутри.'
+    : cfg3.lvl===3 ? 'Оба вопроса вперемешку — главное не перепутать.'
+    : 'A = 24 cm², a = 6 cm. Wie lang ist b? — снова нужно деление.';
+}
+$('glev').addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b) return;
+  cfg3.lvl=+b.dataset.g; store.set('umn:cfg3',cfg3); paintGeoChips(); });
+$('glen').addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b) return;
+  cfg3.len=+b.dataset.len; store.set('umn:cfg3',cfg3); paintGeoChips(); });
+
+function buildGeo(){
+  var a=R(2,12), b=R(2,12);
+  var kind = cfg3.lvl===3 ? (Math.random()<.5?'u':'a') : cfg3.lvl===1 ? 'u' : cfg3.lvl===2 ? 'a' : 'back';
+  if(kind==='back'){
+    a=R(2,12); b=R(2,12);
+    var byA = Math.random()<.5;
+    return {kind:'geo', a:a, b:b, show:false, unit:'cm', ans:(byA?b:a),
+      q:'A = '+(a*b)+' cm², '+(byA?'a = '+a:'b = '+b)+' cm',
+      ask:(byA?'Wie lang ist b?':'Wie lang ist a?'),
+      plain:'A = '+(a*b)+' cm² : '+(byA?a:b)+' = '+(byA?b:a)+' cm'};
+  }
+  if(kind==='u') return {kind:'geo', a:a, b:b, show:true, unit:'cm', ans:2*(a+b),
+    ask:'Wie groß ist der Umfang?', plain:'U = 2 · ('+a+' + '+b+') = '+(2*(a+b))+' cm'};
+  return {kind:'geo', a:a, b:b, show:true, unit:'cm²', ans:a*b,
+    ask:'Wie groß ist der Flächeninhalt?', plain:'A = '+a+' · '+b+' = '+(a*b)+' cm²'};
+}
+function geoPic(q){
+  if(!q.show){ $('gPic').innerHTML=''; $('gPic').classList.add('hidden'); return; }
+  $('gPic').classList.remove('hidden');
+  var cp=cellPx(q.a,q.b), w=q.a*cp+122, h=q.b*cp+50;
+  $('gPic').innerHTML='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'+field(q.a,q.b,{},0,cp)+'</svg>';
+}
+$('playGeo').onclick=function(){ startSession('geo',null); };
+
 /* ── экраны ── */
-var SCREENS=['topics','setupTable','setupOrder','game','result','progress','stickers','geo','lesson'];
+var SCREENS=['topics','setupTable','setupOrder','game','result','progress','stickers','geo','lesson','parent'];
 function show(id){
   SCREENS.forEach(function(s){ $(s).classList.toggle('hidden', s!==id); });
   window.scrollTo(0,0);
@@ -669,7 +787,7 @@ document.querySelectorAll('.topic').forEach(function(b){
   b.onclick=function(){
     var t=b.dataset.topic;
     if(t==='table'){ paintChips(); show('setupTable'); }
-    else if(t==='geo'){ show('geo'); }
+    else if(t==='geo'){ paintGeoChips(); show('geo'); }
     else { paintOrderChips(); show('setupOrder'); }
   };
 });
@@ -783,17 +901,18 @@ function paintAnswer(){
 function startSession(topic, queue){
   if(ach.days.indexOf(today())===-1){ ach.days.push(today()); saveAch(); }
   S={topic:topic, i:0, right:0, streak:0, best:0, typed:'', locked:false, phase:'calc',
-     count:(topic==='order' || cfg.input==='type'),
+     count:(topic!=='table' || cfg.input==='type'),
      mistakes:[], t0:Date.now(), queue:queue||null,
-     total: queue ? queue.length : (topic==='table'?cfg.len:cfg2.len)};
+     total: queue ? queue.length : (topic==='table'?cfg.len:topic==='order'?cfg2.len:cfg3.len)};
   show('game'); nextQuestion();
 }
 function nextQuestion(){
   if(S.i>=S.total) return finish();
-  S.q = S.queue ? S.queue[S.i] : (S.topic==='table' ? buildTable() : buildOrder());
+  S.q = S.queue ? S.queue[S.i] : (S.topic==='table' ? buildTable() : S.topic==='order' ? buildOrder() : buildGeo());
   S.typed=''; S.locked=false;
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
-  $('task').innerHTML = S.q.text;
+  if(S.q.kind==='geo'){ geoPic(S.q); $('task').innerHTML = S.q.q || (S.q.a+' <em>×</em> '+S.q.b+' cm'); }
+  else { $('gPic').classList.add('hidden'); $('task').innerHTML = S.q.text; }
   $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
   $('step0').textContent='';
   $('verdict').textContent=''; $('verdict').className='verdict';
@@ -805,8 +924,8 @@ function nextQuestion(){
 }
 function layout(){
   var pick = S.phase==='pick';
-  var typing = S.topic==='order' ? true : cfg.input==='type';
-  $('ask').textContent = pick ? 'Какое действие считаем первым?' : '';
+  var typing = S.topic==='table' ? cfg.input==='type' : true;
+  $('ask').textContent = pick ? 'Какое действие считаем первым?' : (S.q.kind==='geo' ? S.q.ask : '');
   $('pad').classList.toggle('hidden', pick || !typing);
   $('options').classList.toggle('hidden', pick || typing);
   $('answer').style.display = (!pick && typing && S.q.op!=='find') ? 'flex' : 'none';
@@ -849,26 +968,34 @@ function submit(val){
   if(S.locked || S.phase==='pick' || val===null || isNaN(val)) return;
   S.locked=true;
   var good = val===S.q.ans;
-  if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else markOrd(S.q.id, good?'c':'w');
+  if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else if(S.q.kind==='order') markOrd(S.q.id, good?'c':'w');
 
   if(good){
     S.right++; S.streak++; S.best=Math.max(S.best,S.streak);
     if(S.count){
-      var pts = S.topic==='order' ? 2 : 1;
-      ach.c += pts;
-      if(S.topic==='order') ach.o += pts;
+      var pts = S.topic==='table' ? 1 : 2;
+      if(ach.cap.d!==today()) ach.cap={d:today(), n:0};
+      var left = DAY_CAP - ach.cap.n;
+      var give = Math.max(0, Math.min(pts, left));
+      if(give){
+        ach.cap.n += give; ach.c += give;
+        if(S.topic==='order') ach.o += give;
+        if(S.topic==='geo')   ach.g += give;
+      }
+      S.capped = (left<=0);
       if(S.streak>ach.best) ach.best=S.streak;
       saveAch();
     }
     $('stage').className='stage ok';
     $('verdict').className='verdict ok';
-    $('verdict').textContent = S.streak>=5 ? 'Подряд '+S.streak+'!' : 'Верно';
+    $('verdict').textContent = S.capped ? 'Tagesziel erfüllt — норма выполнена'
+      : (S.streak>=5 ? 'Подряд '+S.streak+'!' : 'Верно');
     sndOk();
   } else {
     S.streak=0; S.mistakes.push(S.q);
     $('stage').className='stage no';
     $('verdict').className='verdict no';
-    $('verdict').innerHTML='Правильный ответ — <b>'+S.q.ans+'</b>';
+    $('verdict').innerHTML='Правильный ответ — <b>'+S.q.ans+(S.q.kind==='geo'?' '+S.q.unit:'')+'</b>';
     if($('answer').style.display!=='none'){ $('answer').className='answer'; $('answer').textContent=val; }
     sndNo();
   }
@@ -890,7 +1017,7 @@ function finish(){
     $('missList').innerHTML=S.mistakes.map(function(q){ return '<span class="miss">'+q.plain+'</span>'; }).join('');
   } else box.classList.add('hidden');
   $('repeatErr').classList.toggle('hidden', S.mistakes.length===0);
-  ach.sess++; saveAch();
+  ach.sess++; saveAch(); backup();
   var fresh = S.count ? checkStickers() : [];
   if(fresh.length){ show('result'); award(fresh); return; }
   if(n===3) sndWin(); else beep(660,.15);
@@ -1055,6 +1182,104 @@ $('lPrev').onclick=function(){ if(L.i){ L.i--; renderLesson(); } };
 $('lQuit').onclick=function(){ stopAnim(); show('geo'); };
 $('toLesson').onclick=function(){ L.i=0; show('lesson'); renderLesson(); };
 
+
+/* ── родительский раздел ── */
+var PIN = {buf:'', mode:'ask'};
+function snapshot(){ return {ach:ach, facts:facts, ord:ord, t:Date.now()}; }
+function backup(){ store.set('umn:bak', snapshot()); }
+function applySnap(d){
+  if(!d || !d.ach) return false;
+  ach=d.ach; facts=d.facts||{}; ord=d.ord||{};
+  if(ach.g===undefined) ach.g=0;
+  if(!ach.cap) ach.cap={d:'',n:0};
+  store.set('umn:ach',ach); store.set('umn:facts',facts); store.set('umn:ord',ord);
+  return true;
+}
+(function initPin(){
+  var pad=$('pinPad');
+  ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(function(l){
+    var b=document.createElement('button');
+    b.className='key'+(l==='✓'?' go':l==='⌫'?' del':'');
+    b.textContent=l; b.dataset.k=l; pad.appendChild(b);
+  });
+})();
+function pinPaint(){
+  $('pinDots').textContent = PIN.buf.replace(/./g,'•');
+  var set = store.get('umn:pin', null);
+  $('pinTitle').textContent = PIN.mode==='set' ? 'Придумайте код' : 'Родительский код';
+  $('pinHint').textContent = PIN.mode==='set'
+    ? 'Четыре цифры. Понадобится, чтобы попасть сюда снова.'
+    : (set===null ? 'Кода ещё нет — задайте его.' : 'Введите четыре цифры.');
+}
+$('pinPad').addEventListener('click',function(e){
+  var b=e.target.closest('.key'); if(!b) return;
+  var k=b.dataset.k;
+  if(k==='⌫') PIN.buf=PIN.buf.slice(0,-1);
+  else if(k==='✓'){
+    if(PIN.buf.length!==4){ beep(200,.15,'triangle'); return; }
+    var set=store.get('umn:pin', null);
+    if(PIN.mode==='set' || set===null){
+      store.set('umn:pin', PIN.buf); PIN.mode='ask'; PIN.buf=''; openParent(); beep(880,.1); return;
+    }
+    if(PIN.buf===set){ PIN.buf=''; openParent(); beep(880,.1); }
+    else { PIN.buf=''; beep(190,.25,'triangle'); $('pinHint').textContent='Неверный код.'; }
+  }
+  else if(PIN.buf.length<4) PIN.buf+=k;
+  pinPaint();
+});
+function openParent(){
+  $('pinBox').classList.add('hidden');
+  $('pBody').classList.remove('hidden');
+  var b=store.get('umn:bak', null);
+  $('bakInfo').textContent = b ? 'Последняя копия: '+new Date(b.t).toLocaleString('ru-RU')+' — '+b.ach.c+' мячей, наград '+b.ach.got.length+'.'
+                               : 'Копий пока нет. Она создаётся после каждой тренировки.';
+  pStat();
+}
+function pStat(){
+  $('pStat').textContent='Сейчас: '+ach.c+' мячей (порядок '+ach.o+', геометрия '+ach.g+'), наград '+ach.got.length+'.';
+}
+$('toParent').onclick=function(){
+  PIN.buf=''; PIN.mode = store.get('umn:pin',null)===null ? 'set' : 'ask';
+  $('pinBox').classList.remove('hidden'); $('pBody').classList.add('hidden');
+  pinPaint(); show('parent');
+};
+$('pinChange').onclick=function(){ store.set('umn:pin',null); PIN.mode='set'; PIN.buf='';
+  $('pinBox').classList.remove('hidden'); $('pBody').classList.add('hidden'); pinPaint(); };
+$('bakRestore').onclick=function(){
+  var b=store.get('umn:bak',null);
+  if(!b){ alert('Копий пока нет.'); return; }
+  if(!confirm('Откатить прогресс к копии от '+new Date(b.t).toLocaleString('ru-RU')+'?')) return;
+  applySnap(b); pStat(); alert('Готово.');
+};
+$('bakSave').onclick=function(){
+  var bl=new Blob([JSON.stringify(snapshot())],{type:'application/json'});
+  var u=URL.createObjectURL(bl), a=document.createElement('a');
+  a.href=u; a.download='umnozhariy-progress.json'; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); },4000);
+};
+$('bakLoad').onclick=function(){ $('bakFile').click(); };
+$('bakFile').addEventListener('change',function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{ if(applySnap(JSON.parse(r.result))){ pStat(); alert('Прогресс загружен.'); } else alert('Файл не подходит.'); }
+    catch(err){ alert('Не удалось прочитать файл.'); }
+  };
+  r.readAsText(f); e.target.value='';
+});
+$('pBody').addEventListener('click',function(e){
+  var b=e.target.closest('[data-p]'); if(!b) return;
+  var k=b.dataset.p, d=k.slice(-1)==='+'?10:-10;
+  if(k[0]==='c') ach.c=Math.max(0,ach.c+d);
+  if(k[0]==='o') ach.o=Math.max(0,ach.o+d);
+  if(k[0]==='g') ach.g=Math.max(0,ach.g+d);
+  if(k[0]==='s'){
+    if(d>0){ for(var i=0;i<STICK.length;i++) if(ach.got.indexOf(i)===-1){ ach.got.push(i); break; } }
+    else ach.got.pop();
+  }
+  saveAch(); pStat();
+});
+
 /* ── успехи ── */
 function paintProgress(){
   var html='<div class="hd">×</div>', a,b,known=0;
@@ -1091,12 +1316,13 @@ function paintProgress(){
 $('toProgress').onclick=function(){ paintProgress(); show('progress'); };
 $('toStickers').onclick=function(){ paintStickers(); show('stickers'); };
 $('reset').onclick=function(){
-  if(!confirm('Стереть всю статистику по обеим темам?')) return;
-  facts={}; ord={}; ach={c:0,o:0,best:0,days:[],sess:0,got:[],season:1};
-  store.set('umn:facts',facts); store.set('umn:ord',ord); saveAch(); paintProgress();
+  if(!confirm('Стереть весь прогресс? Копия останется, откатить можно кнопкой выше.')) return;
+  backup();
+  facts={}; ord={}; ach={c:0,o:0,g:0,best:0,days:[],sess:0,got:[],season:1,cap:{d:'',n:0}};
+  store.set('umn:facts',facts); store.set('umn:ord',ord); saveAch(); pStat();
 };
 
-paintChips(); paintOrderChips();
+paintChips(); paintOrderChips(); paintGeoChips();
 
 if('serviceWorker' in navigator && location.protocol==='https:'){
   window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
