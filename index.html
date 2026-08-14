@@ -144,6 +144,27 @@ h2{font-size:15px; font-weight:700; margin:0 0 8px}
 .wrap h3{margin:0 0 2px; font-size:22px; color:var(--pen)}
 .wrap p{margin:0 0 14px; font-size:14px; color:var(--ink-soft)}
 .wrap .big{margin-top:0}
+/* низкие экраны: ужимаем всё, чтобы клавиатура влезала целиком */
+#game .stage{padding:14px 10px}
+#game .task{font-size:clamp(26px,8vw,38px)}
+#gPic svg{max-height:26vh}
+@media (max-height:820px){
+  #game .stage{padding:10px 8px; margin-bottom:8px}
+  #game .bar{margin-bottom:8px}
+  #game .ask{margin-bottom:6px; font-size:13px}
+  #game .task{font-size:clamp(22px,6.6vw,32px)}
+  #game .answer{height:40px; font-size:32px}
+  #game .verdict{font-size:13px; min-height:18px}
+  #game .key{padding:9px 0; font-size:21px; border-radius:10px}
+  #game .pad{gap:6px}
+  #game .opt{padding:13px 0; font-size:23px}
+  #gPic svg{max-height:22vh}
+}
+@media (max-height:680px){
+  #game .key{padding:6px 0; font-size:18px}
+  #game .task{font-size:clamp(19px,5.6vw,26px)}
+  #gPic svg{max-height:19vh}
+}
 .hidden{display:none !important}
 .pop{animation:pop .3s ease}
 @keyframes pop{0%{transform:scale(.7); opacity:0}100%{transform:scale(1); opacity:1}}
@@ -752,26 +773,31 @@ $('glev').addEventListener('click',function(e){ var b=e.target.closest('.chip');
 $('glen').addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b) return;
   cfg3.len=+b.dataset.len; store.set('umn:cfg3',cfg3); paintGeoChips(); });
 
+var BLANK = '<span class="blank"></span>';
 function buildGeo(){
   var a=R(2,12), b=R(2,12);
+  if(b>a){ var t=a; a=b; b=t; }               // a — длинная сторона, как в тетради
   var kind = cfg3.lvl===3 ? (Math.random()<.5?'u':'a') : cfg3.lvl===1 ? 'u' : cfg3.lvl===2 ? 'a' : 'back';
   if(kind==='back'){
-    a=R(2,12); b=R(2,12);
-    var byA = Math.random()<.5;
+    var byA = Math.random()<.5;               // известна a — ищем b, и наоборот
     return {kind:'geo', a:a, b:b, show:false, unit:'cm', ans:(byA?b:a),
-      q:'A = '+(a*b)+' cm², '+(byA?'a = '+a:'b = '+b)+' cm',
+      given:'A = '+(a*b)+' cm²,  '+(byA?'a = '+a:'b = '+b)+' cm',
+      text:(byA?'b':'a')+' = '+BLANK+' cm',
       ask:(byA?'Wie lang ist b?':'Wie lang ist a?'),
       plain:'A = '+(a*b)+' cm² : '+(byA?a:b)+' = '+(byA?b:a)+' cm'};
   }
   if(kind==='u') return {kind:'geo', a:a, b:b, show:true, unit:'cm', ans:2*(a+b),
+    text:'U = '+BLANK+' cm',
     ask:'Wie groß ist der Umfang?', plain:'U = 2 · ('+a+' + '+b+') = '+(2*(a+b))+' cm'};
   return {kind:'geo', a:a, b:b, show:true, unit:'cm²', ans:a*b,
+    text:'A = '+BLANK+' cm²',
     ask:'Wie groß ist der Flächeninhalt?', plain:'A = '+a+' · '+b+' = '+(a*b)+' cm²'};
 }
 function geoPic(q){
   if(!q.show){ $('gPic').innerHTML=''; $('gPic').classList.add('hidden'); return; }
   $('gPic').classList.remove('hidden');
-  var cp=cellPx(q.a,q.b), w=q.a*cp+122, h=q.b*cp+50;
+  var budget = Math.max(110, Math.round((window.innerHeight||760)*0.24));
+  var cp=cellPx(q.a,q.b,budget), w=q.a*cp+122, h=q.b*cp+50;
   $('gPic').innerHTML='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'+field(q.a,q.b,{},0,cp)+'</svg>';
 }
 $('playGeo').onclick=function(){ startSession('geo',null); };
@@ -911,10 +937,10 @@ function nextQuestion(){
   S.q = S.queue ? S.queue[S.i] : (S.topic==='table' ? buildTable() : S.topic==='order' ? buildOrder() : buildGeo());
   S.typed=''; S.locked=false;
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
-  if(S.q.kind==='geo'){ geoPic(S.q); $('task').innerHTML = S.q.q || (S.q.a+' <em>×</em> '+S.q.b+' cm'); }
-  else { $('gPic').classList.add('hidden'); $('task').innerHTML = S.q.text; }
+  if(S.q.kind==='geo') geoPic(S.q); else $('gPic').classList.add('hidden');
+  $('task').innerHTML = S.q.text;
   $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
-  $('step0').textContent='';
+  $('step0').textContent = S.q.given || '';
   $('verdict').textContent=''; $('verdict').className='verdict';
   $('stage').className='stage';
   $('pbar').style.width=(S.i/S.total*100)+'%';
@@ -928,7 +954,8 @@ function layout(){
   $('ask').textContent = pick ? 'Какое действие считаем первым?' : (S.q.kind==='geo' ? S.q.ask : '');
   $('pad').classList.toggle('hidden', pick || !typing);
   $('options').classList.toggle('hidden', pick || typing);
-  $('answer').style.display = (!pick && typing && S.q.op!=='find') ? 'flex' : 'none';
+  var inBlank = !!document.querySelector('#task .blank');
+  $('answer').style.display = (!pick && typing && !inBlank) ? 'flex' : 'none';
   if(!pick && !typing) paintOptions(S.q.ans);
 }
 function paintOptions(ans){
@@ -1054,9 +1081,11 @@ var LSTEP = [
   x:'Beide Felder haben den <b>gleichen Umfang</b>: 16 cm. Aber der Rasen ist ganz verschieden! Gleicher Zaun — anderes Feld.'}
 ];
 
-function cellPx(cols, rows){
+function cellPx(cols, rows, maxH){
   var w = Math.min(360, (window.innerWidth||380) - 60);
-  return Math.max(13, Math.min(32, Math.floor(w/Math.max(cols+2, rows+3))));
+  var byW = w/(cols+2.4);
+  var byH = (maxH||400)/(rows+1.2);
+  return Math.max(9, Math.min(32, Math.floor(Math.min(byW, byH))));
 }
 /* рисуем поле; opt: {edge:n сторон подсвечено, cells:n клеток, rows:n рядов, pair:bool} */
 function field(a, b, opt, ox, cp){
@@ -1102,20 +1131,20 @@ function renderLesson(){
 
   var cp, w, h;
   if(L.i===6){
-    cp=cellPx(12,4);
+    cp=cellPx(12,4,320);
     w=(7+4)*cp+280; h=4*cp+70;
     draw(field(7,1,{cells:7},0,cp) + field(4,4,{cells:16},(7*cp+130),cp), w, h);
     $('lRead').innerHTML='U = 16 cm · A = 7 cm²&nbsp;&nbsp;|&nbsp;&nbsp;U = 16 cm · A = 16 cm²';
     return;
   }
   if(L.i===5){
-    cp=cellPx(6,3);
+    cp=cellPx(6,3,320);
     w=6*cp+122; h=3*cp+50;
     draw(field(6,3,{cells:18},0,cp), w, h);
     $('lRead').innerHTML='U = 18 <b>cm</b> &nbsp;·&nbsp; A = 18 <b>cm²</b>';
     return;
   }
-  cp=cellPx(a,b); w=a*cp+122; h=b*cp+50;
+  cp=cellPx(a,b,320); w=a*cp+122; h=b*cp+50;
   if(L.i===2){
     draw(field(a,b,{pair:true},0,cp), w, h);
     $('lRead').innerHTML='U = 2 · (a + b) = 2 · '+(a+b)+' = <b>'+(2*(a+b))+' cm</b>';
@@ -1131,7 +1160,7 @@ function renderLesson(){
 /* анимации по кнопке */
 $('lAct').onclick=function(){
   stopAnim();
-  var a=L.a, b=L.b, cp=cellPx(a,b), w=a*cp+122, h=b*cp+50;
+  var a=L.a, b=L.b, cp=cellPx(a,b,320), w=a*cp+122, h=b*cp+50;
   if(L.i===1){
     var k=0, sum=0, len=[a,b,a,b], parts=[];
     L.timer=setInterval(function(){
