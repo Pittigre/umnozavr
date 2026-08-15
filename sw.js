@@ -1,8 +1,11 @@
 /* Умножарий — офлайн-кэш. Поднимите VERSION после любой правки файлов. */
-const VERSION = 'umnozhariy-v9';
+const VERSION = 'umnozhariy-v10';
 const ASSETS = [
   './',
   './index.html',
+  './core.js',
+  './topics.js',
+  './lessons.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
