@@ -199,9 +199,11 @@ function nextQuestion(){
   if(S.i>=S.total) return finish();
   S.q = S.queue ? S.queue[S.i] :
         (S.topic==='table' ? buildTable() : S.topic==='order' ? buildOrder() :
-         S.topic==='geo' ? buildGeo() : S.topic==='zehner' ? buildZehner() : buildTeiler());
+         S.topic==='geo' ? buildGeo() : S.topic==='zehner' ? buildZehner() :
+         S.topic==='teiler' ? buildTeiler() : S.topic==='rest' ? buildRest() : buildDouble());
   S.typed=''; S.locked=false;
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
+  S.step2 = false;
   if(S.q.kind==='geo') geoPic(S.q); else $('gPic').classList.add('hidden');
   $('task').innerHTML = S.q.text;
   $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
@@ -209,9 +211,16 @@ function nextQuestion(){
   $('verdict').textContent=''; $('verdict').className='verdict';
   $('stage').className='stage';
   $('pbar').style.width=(S.i/S.total*100)+'%';
-  $('streak').textContent = S.streak>=3 ? '🔥 '+S.streak : '';
+  paintDay();
   paintAnswer();
   layout();
+}
+function paintDay(){
+  if(!S.count){ $('streak').innerHTML='<span style="color:var(--ink-soft);font-size:12px">без зачёта</span>'; return; }
+  if(ach.cap.d!==today()) ach.cap={d:today(), n:0};
+  var left=DAY_CAP-ach.cap.n;
+  $('streak').innerHTML = left<=0 ? '<span style="color:var(--ok);font-size:12px">норма ✓</span>'
+    : (S.streak>=3 ? '🔥 '+S.streak+' ' : '') + '<span style="font-size:12px;color:var(--ink-soft)">⚽ '+ach.cap.n+'/'+DAY_CAP+'</span>';
 }
 function layout(){
   var pick = S.phase==='pick';
@@ -263,8 +272,23 @@ function pickOp(i, btn){
 
 function submit(val){
   if(S.locked || S.phase==='pick' || val===null || isNaN(val)) return;
+  /* деление с остатком: первый ответ — частное, затем спрашиваем остаток */
+  if(S.q.kind==='rest' && !S.step2){
+    if(val!==S.q.ans){
+      S.locked=true; S.streak=0; S.mistakes.push(S.q);
+      tpMark('rest', false);
+      $('stage').className='stage no'; $('verdict').className='verdict no';
+      $('verdict').innerHTML='Richtig wäre <b>'+S.q.q+' R '+S.q.r+'</b>';
+      sndNo(); S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
+      setTimeout(nextQuestion, 1600); return;
+    }
+    S.step2=true; S.typed=''; S.locked=false;
+    $('ask').textContent='Was bleibt übrig?';
+    $('task').innerHTML=(S.q.d*S.q.q+S.q.r)+' <em>:</em> '+S.q.d+' <em>=</em> '+S.q.q+' R '+BLANK;
+    paintAnswer(); beep(760,.08); return;
+  }
   S.locked=true;
-  var good = val===S.q.ans;
+  var good = S.q.kind==='rest' ? (val===S.q.ans2) : (val===S.q.ans);
   if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else if(S.q.kind==='order') markOrd(S.q.id, good?'c':'w');
   if(S.q.topic) tpMark(S.q.topic, good);
 
@@ -300,7 +324,7 @@ function submit(val){
     if($('answer').style.display!=='none'){ $('answer').className='answer'; $('answer').textContent=val; }
     sndNo();
   }
-  S.picked=false;
+  S.picked=false; paintDay();
   S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
   setTimeout(nextQuestion, good?550:1600);
 }
@@ -309,9 +333,12 @@ function finish(){
   var sec=Math.round((Date.now()-S.t0)/1000);
   var pct=S.total?S.right/S.total:0;
   var n=pct>=.95?3:pct>=.8?2:pct>=.6?1:0;
+  var capOut = S.count && ach.cap.d===today() && ach.cap.n>=DAY_CAP;
   $('stars').textContent='★★★'.slice(0,n)+'☆☆☆'.slice(0,3-n);
   $('rScore').textContent=S.right+'/'+S.total;
-  $('rTime').textContent='за '+Math.floor(sec/60)+' мин '+(sec%60)+' с'+(S.best>=3?' · лучшая серия '+S.best:'');
+  $('rTime').innerHTML='за '+Math.floor(sec/60)+' мин '+(sec%60)+' с'+(S.best>=3?' · лучшая серия '+S.best:'')
+    + (!S.count ? '<br><b style="color:var(--no)">Этот режим не идёт в зачёт мячей</b>' : '')
+    + (capOut ? '<br><b style="color:var(--ok)">Tagesziel erfüllt — норма на сегодня выполнена</b>' : '');
   var box=$('missBox');
   if(S.mistakes.length){
     box.classList.remove('hidden');
@@ -542,10 +569,13 @@ function wire_core(){
 }
 
 /* ══ список тем на главном экране ══ */
-var NEW={zehner:{cfg:null, lvls:[['1','Mal · 6 · 40'],['2','Geteilt · 240 : 6'],['3','Vermischt']]},
-         teiler:{cfg:null, lvls:[['1','Vielfache'],['2','Teiler'],['3','Vermischt']]}};
-function nCfg(id){ return id==='zehner'?cfg4:cfg5; }
-function nSave(id){ store.set(id==='zehner'?'umn:cfg4':'umn:cfg5', nCfg(id)); }
+var NEW={zehner:{lvls:[['1','Mal · 6 · 40'],['2','Geteilt · 240 : 6'],['3','Vermischt']]},
+         teiler:{lvls:[['1','Vielfache'],['2','Teiler'],['3','Vermischt']]},
+         rest:  {lvls:[['1','Ergebnis und Rest'],['2','Nur der Rest'],['3','Rückwärts']]},
+         double:{lvls:[['1','Verdoppeln'],['2','Halbieren'],['3','Vermischt']]}};
+var NCFG={zehner:'umn:cfg4', teiler:'umn:cfg5', rest:'umn:cfg6', double:'umn:cfg7'};
+function nCfg(id){ return id==='zehner'?cfg4:id==='teiler'?cfg5:id==='rest'?cfg6:cfg7; }
+function nSave(id){ store.set(NCFG[id], nCfg(id)); }
 var curNew=null;
 
 function paintTopics(){

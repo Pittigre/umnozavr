@@ -237,3 +237,58 @@ function renderLesson2(){
   $('lPrev').style.visibility=L2.i?'visible':'hidden';
   $('lNext').textContent=L2.i===arr.length-1?'Fertig!':'Weiter';
 }
+
+/* ── картинки для деления с остатком и удвоения ── */
+function dots(total, per, groups){          // кружки, разложенные по группам
+  var cp=17, g='', i, gx=24, gy=18, col=0, row=0, placed=0;
+  for(i=0;i<groups;i++){
+    var x=24+i*(per*cp+18);
+    g+='<rect x="'+(x-6)+'" y="12" width="'+(per*cp+4)+'" height="'+(cp+14)+'" rx="7" fill="none" stroke="#2C4CC8" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    for(col=0;col<per && placed<total;col++,placed++)
+      g+='<circle cx="'+(x+col*cp+7)+'" cy="'+(12+cp/2+7)+'" r="6.5" fill="#B7E4CD" stroke="#2C4CC8" stroke-width="1.2"/>';
+  }
+  var restX=24+groups*(per*cp+18);
+  for(i=0;placed<total;placed++,i++)
+    g+='<circle cx="'+(restX+i*cp+7)+'" cy="'+(12+cp/2+7)+'" r="6.5" fill="#F7E0A8" stroke="#C4372B" stroke-width="1.5"/>';
+  if(total>groups*per) g+='<text x="'+(restX)+'" y="'+(cp+40)+'" font-size="12" font-weight="700" fill="#C4372B">Rest</text>';
+  return svg(restX+(total-groups*per)*cp+30, cp+52, g);
+}
+function twoBars(n, split){                  // полоска и её удвоение или половина
+  var cp=Math.max(7, Math.min(16, Math.floor(360/Math.max(n,2)))), g='';
+  g+=bar(20,14,n,cp,'#B7E4CD');
+  g+='<text x="'+(24+n*cp)+'" y="'+(14+cp-2)+'" font-size="13" font-weight="700" fill="#1B2A3A">'+n+'</text>';
+  if(split){
+    g+=bar(20,16+cp+10,Math.floor(n/2),cp,'#B7E4CD');
+    g+=bar(20+Math.floor(n/2)*cp,16+cp+10,n-Math.floor(n/2),cp,'#EDF2F7');
+    g+='<text x="'+(24+n*cp)+'" y="'+(16+2*cp+8)+'" font-size="13" font-weight="700" fill="#2C4CC8">'+Math.floor(n/2)+'</text>';
+  } else {
+    g+=bar(20,16+cp+10,n,cp,'#B7E4CD'); g+=bar(20+n*cp,16+cp+10,n,cp,'#B7E4CD');
+    g+='<text x="'+(24+2*n*cp)+'" y="'+(16+2*cp+8)+'" font-size="13" font-weight="700" fill="#2C4CC8">'+(2*n)+'</text>';
+  }
+  return svg(60+(split?n:2*n)*cp, 2*cp+34, g);
+}
+
+LESSONS.rest=[
+ {t:'Verteilen', x:'<b>13 Bonbons</b> für <b>4 Kinder</b>. Jedes Kind bekommt gleich viele. Schau: jeder bekommt 3 — und eines bleibt <b>übrig</b>.',
+  pic:function(){ return dots(13,3,4); }, read:'4 Kinder · je 3 Bonbons · 1 bleibt übrig'},
+ {t:'Wir schreiben es auf', x:'Das Übriggebliebene heißt <b>Rest</b>. Wir schreiben ein <b>R</b> dahinter.',
+  pic:function(){ return dots(13,3,4); }, read:'13 : 4 = 3 R 1'},
+ {t:'Der Rest ist klein', x:'Der Rest ist <b>immer kleiner als der Divisor</b>. Beim Teilen durch 4 kann der Rest nur 0, 1, 2 oder 3 sein — <b>niemals 4</b>. Sonst passt noch ein Kind dazu!',
+  pic:function(){ return dots(15,3,5); }, read:'Teilen durch 4 → Rest: 0, 1, 2 oder 3'},
+ {t:'Die Probe', x:'Du kannst nachprüfen: rechne <b>Ergebnis mal Divisor</b> und zähle den Rest dazu. Kommt die Zahl vom Anfang heraus, stimmt alles.',
+  pic:function(){ return dots(13,3,4); }, read:'3 · 4 = 12,  12 + 1 = 13 ✓'},
+ {t:'Wortspeicher', x:'<b>der Rest</b> — остаток · <b>übrig bleiben</b> — оставаться · <b>verteilen</b> — раздать поровну · <b>die Probe</b> — проверка',
+  pic:function(){ return dots(11,2,5); }, read:'11 : 5 = 2 R 1'}
+];
+LESSONS.double=[
+ {t:'Verdoppeln', x:'<b>Verdoppeln</b> heißt: noch einmal so viel. Nimm die Zahl <b>zweimal</b>.',
+  pic:function(){ return twoBars(6,false); }, read:'das Doppelte von 6 = 12'},
+ {t:'Halbieren', x:'<b>Halbieren</b> heißt: gerecht in <b>zwei gleiche Teile</b> teilen. Das ist der Rückweg zum Verdoppeln.',
+  pic:function(){ return twoBars(12,true); }, read:'die Hälfte von 12 = 6'},
+ {t:'Große Zahlen', x:'Bei großen Zahlen nimm <b>Zehner und Einer getrennt</b>. 24 sind 20 und 4. Verdopple beides und zähle zusammen.',
+  pic:function(){ return twoBars(24,false); }, read:'20 → 40,  4 → 8,  40 + 8 = 48'},
+ {t:'Gerade und ungerade', x:'Nur <b>gerade</b> Zahlen kann man ohne Rest halbieren. 13 ist <b>ungerade</b> — da bleibt etwas übrig.',
+  pic:function(){ return twoBars(13,true); }, read:'13 : 2 = 6 R 1'},
+ {t:'Wortspeicher', x:'<b>das Doppelte</b> — двойное · <b>die Hälfte</b> — половина · <b>gerade</b> — чётное · <b>ungerade</b> — нечётное',
+  pic:function(){ return twoBars(9,false); }, read:'das Doppelte von 9 = 18'}
+];

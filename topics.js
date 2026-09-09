@@ -237,6 +237,8 @@ var TOPICS=[
  {id:'table',  de:'Einmaleins',            ru:'Таблица умножения и деления', open:true},
  {id:'zehner', de:'Zehnereinmaleins',      ru:'Умножение и деление на круглые десятки'},
  {id:'teiler', de:'Vielfache und Teiler',  ru:'Кратные и делители'},
+ {id:'rest',   de:'Division mit Rest',    ru:'Деление с остатком'},
+ {id:'double', de:'Verdoppeln und Halbieren', ru:'Удвоение и деление пополам'},
  {id:'order',  de:'Punkt vor Strich',      ru:'Порядок действий', open:true},
  {id:'geo',    de:'Umfang und Fläche',     ru:'Периметр и площадь', open:true}
 ];
@@ -315,4 +317,37 @@ function buildTeiler(){
     ask:'Ist '+d+' ein Teiler von '+num+'?',
     text:num+' <em>:</em> '+d+' <em>=</em> ?',
     plain:'Ist '+d+' ein Teiler von '+num+'? '+(yes?'Ja':'Nein')};
+}
+
+/* ══ тема: Division mit Rest ══ */
+var cfg6 = store.get('umn:cfg6', {lvl:1, len:10});
+function buildRest(){
+  var d=R(2,9), q=R(2,9), r=R(1,d-1), n=d*q+r;
+  var lvl = cfg6.lvl;
+  if(lvl===2)                                   // спрашиваем только остаток
+    return {kind:'plain', topic:'rest', ans:r, ask:'Wie groß ist der Rest?',
+      text:n+' <em>:</em> '+d+' <em>=</em> '+q+' R '+BLANK,
+      plain:n+' : '+d+' = '+q+' R '+r};
+  if(lvl===3)                                   // обратная: найти делимое
+    return {kind:'plain', topic:'rest', ans:n, ask:'Welche Zahl wurde geteilt?',
+      text:BLANK+' <em>:</em> '+d+' <em>=</em> '+q+' R '+r,
+      plain:n+' : '+d+' = '+q+' R '+r};
+  return {kind:'rest', topic:'rest', d:d, q:q, r:r, ans:q, ans2:r,   // два шага
+    ask:'Wie oft passt die '+d+' hinein?',
+    text:n+' <em>:</em> '+d+' <em>=</em> '+BLANK,
+    plain:n+' : '+d+' = '+q+' R '+r};
+}
+
+/* ══ тема: Verdoppeln und Halbieren ══ */
+var cfg7 = store.get('umn:cfg7', {lvl:1, len:10});
+function buildDouble(){
+  var lvl = cfg7.lvl===3 ? (Math.random()<.5?1:2) : cfg7.lvl;
+  if(lvl===1){
+    var n = Math.random()<.5 ? R(2,50) : R(2,9)*10 + R(0,9);
+    return {kind:'plain', topic:'double', ans:2*n, ask:'Verdopple die Zahl.',
+      text:'das Doppelte von '+n+' <em>=</em> '+BLANK, plain:'das Doppelte von '+n+' = '+(2*n)};
+  }
+  var h=R(2,100), m=2*h;
+  return {kind:'plain', topic:'double', ans:h, ask:'Halbiere die Zahl.',
+    text:'die Hälfte von '+m+' <em>=</em> '+BLANK, plain:'die Hälfte von '+m+' = '+h};
 }
