@@ -201,7 +201,7 @@ function nextQuestion(){
         (S.topic==='table' ? buildTable() : S.topic==='order' ? buildOrder() :
          S.topic==='geo' ? buildGeo() : S.topic==='zehner' ? buildZehner() :
          S.topic==='teiler' ? buildTeiler() : S.topic==='rest' ? buildRest() : buildDouble());
-  S.typed=''; S.locked=false;
+  S.typed=''; S.locked=false; S.qt=Date.now();
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
   S.step2 = false;
   if(S.q.kind==='geo') geoPic(S.q); else $('gPic').classList.add('hidden');
@@ -276,7 +276,7 @@ function submit(val){
   if(S.q.kind==='rest' && !S.step2){
     if(val!==S.q.ans){
       S.locked=true; S.streak=0; S.mistakes.push(S.q);
-      tpMark('rest', false);
+      tpMark('rest', false, Date.now()-(S.qt||Date.now()), S.q.plain);
       $('stage').className='stage no'; $('verdict').className='verdict no';
       $('verdict').innerHTML='Richtig wäre <b>'+S.q.q+' R '+S.q.r+'</b>';
       sndNo(); S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
@@ -290,7 +290,7 @@ function submit(val){
   S.locked=true;
   var good = S.q.kind==='rest' ? (val===S.q.ans2) : (val===S.q.ans);
   if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else if(S.q.kind==='order') markOrd(S.q.id, good?'c':'w');
-  if(S.q.topic) tpMark(S.q.topic, good);
+  if(S.q.topic) tpMark(S.q.topic, good, Date.now()-(S.qt||Date.now()), S.q.plain);
 
   if(good){
     S.right++; S.streak++; S.best=Math.max(S.best,S.streak);
@@ -373,7 +373,7 @@ function pinPaint(){
     : (set===null ? 'Кода ещё нет — задайте его.' : 'Введите четыре цифры.');
 }
 function openParent(){
-  paintUnlock();
+  paintUnlock(); paintReport();
   $('pinBox').classList.add('hidden');
   $('pBody').classList.remove('hidden');
   var b=store.get('umn:bak', null);
@@ -636,4 +636,87 @@ function wire_new(){
     if(!ach.unlock) ach.unlock={};
     ach.unlock[b.dataset.u]=!ach.unlock[b.dataset.u];
     saveAch(); paintUnlock(); paintTopics(); });
+}
+
+/* ══ отчёт по успеваемости ══ */
+var repOpen={};
+function fmtDate(d){
+  if(!d) return '—';
+  var t=today();
+  if(d===t) return 'сегодня';
+  var p=d.split('-'), y=new Date(+p[0],+p[1]-1,+p[2]);
+  var diff=Math.round((new Date(t.split('-')[0],t.split('-')[1]-1,t.split('-')[2])-y)/86400000);
+  if(diff===1) return 'вчера';
+  if(diff<7) return diff+' дн. назад';
+  return p[2]+'.'+p[1];
+}
+function fmtTime(sec){
+  if(sec<60) return sec+' с';
+  var m=Math.round(sec/60);
+  return m<60 ? m+' мин' : Math.floor(m/60)+' ч '+(m%60)+' мин';
+}
+function weekBars(log){
+  var out='', i, max=1, days=[], d, k;
+  for(i=6;i>=0;i--){
+    d=new Date(); d.setDate(d.getDate()-i);
+    k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    var L=log[k]||[0,0];
+    days.push({k:k, n:L[0], ok:L[1], lab:['вс','пн','вт','ср','чт','пт','сб'][d.getDay()]});
+    if(L[0]>max) max=L[0];
+  }
+  days.forEach(function(x){
+    var h=Math.round(x.n/max*40);
+    var acc=x.n?Math.round(x.ok/x.n*100):0;
+    out+='<div title="'+x.n+' ответов, '+acc+'%"><i style="height:'+h+'px;background:'
+       + (x.n===0?'#E8EFF6':acc>=85?'#128C5A':acc>=65?'#B7E4CD':'#F7E0A8')+'"></i><span>'+x.lab+'</span></div>';
+  });
+  return '<div class="week">'+out+'</div>';
+}
+function repRow(T){
+  var s=tpStats(T.id), open=!!repOpen[T.id];
+  var head=s.total ? s.acc+'% · '+s.total+' отв. · '+fmtDate(s.last) : 'ещё не начата';
+  var html='<div class="rep"><button class="rh" data-r="'+T.id+'"><i>'+(open?'▾':'▸')+'</i>'
+         + '<b>'+T.de+'</b><small>'+head+'</small></button>';
+  if(open){
+    html+='<div class="rb">';
+    if(!s.total) html+='По этой теме ещё нет ответов.';
+    else{
+      var trend = s.lastN>=10 ? (s.accLast>s.acc+5?' ↗':s.accLast<s.acc-5?' ↘':'') : '';
+      html+='<table>'
+        + '<tr><td>Точность за всё время</td><td>'+s.acc+'%</td></tr>'
+        + '<tr><td>За последние '+s.lastN+' ответов</td><td>'+s.accLast+'%'+trend+'</td></tr>'
+        + '<tr><td>Ответов: верных / ошибок</td><td>'+s.right+' / '+s.wrong+'</td></tr>'
+        + '<tr><td>Дней занятий</td><td>'+s.days+'</td></tr>'
+        + '<tr><td>Время в теме</td><td>'+fmtTime(s.time)+'</td></tr>'
+        + '<tr><td>Время на ответ (медиана)</td><td>'+(s.med?s.med.toFixed(1)+' с':'—')+'</td></tr>';
+      if(s.slow) html+='<tr><td>Ответов дольше 10 с</td><td>'+s.slow+'</td></tr>';
+      if(s.wFast+s.wSlow) html+='<tr><td>Ошибки: наспех / вдумчиво</td><td>'+s.wFast+' / '+s.wSlow+'</td></tr>';
+      html+='</table>';
+      if(s.med){
+        html+='<p style="margin:8px 0 0">'+(s.med<=4?'Отвечает по памяти — тема автоматизирована.'
+          : s.med<=8?'Считает, но уверенно. Автоматизации пока нет.'
+          : 'Каждый пример пересчитывает заново — нужно больше повторений.')+'</p>';
+      }
+      if(s.wFast>s.wSlow && s.wFast>=3)
+        html+='<p style="margin:6px 0 0; color:var(--no)">Много ошибок наспех — похоже, торопится или тычет наугад.</p>';
+      if(s.bad.length){
+        html+='<h4>Чаще всего ошибается</h4><div class="badq">'
+            + s.bad.map(function(b){ return '<span>'+b.q+(b.n>1?' ×'+b.n:'')+'</span>'; }).join('')+'</div>';
+      }
+      html+='<h4>Неделя</h4>'+weekBars(s.log);
+    }
+    html+='</div>';
+  }
+  return html+'</div>';
+}
+function paintReport(){
+  var html='', i;
+  for(i=0;i<TOPICS.length;i++) html+=repRow(TOPICS[i]);
+  $('report').innerHTML=html;
+}
+function wire_report(){
+  $('report').addEventListener('click',function(e){
+    var b=e.target.closest('[data-r]'); if(!b) return;
+    var k=b.dataset.r; repOpen[k]=!repOpen[k]; paintReport();
+  });
 }

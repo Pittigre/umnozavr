@@ -247,16 +247,61 @@ function tp(id){
   if(!ach.tp[id]) ach.tp[id]={c:0, h:'', days:[], lesson:0};
   return ach.tp[id];
 }
-function tpMark(id, good){
-  var t=tp(id);
-  if(good){ t.c++; if(t.days.indexOf(today())===-1) t.days.push(today()); }
-  t.h=((t.h||'')+(good?'1':'0')).slice(-10);
+/* ms — время на ответ, label — текст задания для списка проблемных */
+function tpMark(id, good, ms, label){
+  var t=tp(id), d=today();
+  if(good){ t.c++; if(t.days.indexOf(d)===-1) t.days.push(d); } else t.w=(t.w||0)+1;
+  t.h=((t.h||'')+(good?'1':'0')).slice(-20);
+
+  if(ms>0 && ms<180000){
+    t.ms=(t.ms||0)+ms;                                  // суммарное время
+    t.times=(t.times||[]); t.times.push(Math.round(ms/100)); // децисекунды, для медианы
+    if(t.times.length>200) t.times=t.times.slice(-200);
+    if(ms>10000) t.slow=(t.slow||0)+1;                  // ответов дольше 10 с
+    if(!good){ if(ms<2500) t.wFast=(t.wFast||0)+1; else t.wSlow=(t.wSlow||0)+1; }
+  }
+  if(!good && label){                                    // проблемные задания
+    t.bad=t.bad||{};
+    t.bad[label]=(t.bad[label]||0)+1;
+    var keys=Object.keys(t.bad);
+    if(keys.length>30){
+      keys.sort(function(a,b){ return t.bad[a]-t.bad[b]; });
+      delete t.bad[keys[0]];
+    }
+  }
+  t.log=t.log||{};                                       // динамика по дням
+  var L=t.log[d]||[0,0]; L[0]++; if(good) L[1]++; t.log[d]=L;
+  var ds=Object.keys(t.log).sort();
+  while(ds.length>30){ delete t.log[ds.shift()]; }
+  t.last=d;
   saveAch();
+}
+function median(arr){
+  if(!arr||!arr.length) return 0;
+  var a=arr.slice().sort(function(x,y){ return x-y; });
+  var m=Math.floor(a.length/2);
+  return (a.length%2 ? a[m] : (a[m-1]+a[m])/2)/10;       // секунды
+}
+function tpStats(id){
+  var t=tp(id), h=t.h||'', ok=0, i;
+  for(i=0;i<h.length;i++) if(h[i]==='1') ok++;
+  var tot=t.c+(t.w||0);
+  var bad=Object.keys(t.bad||{}).sort(function(a,b){ return t.bad[b]-t.bad[a]; }).slice(0,5);
+  return {
+    total:tot, right:t.c, wrong:t.w||0,
+    acc: tot? Math.round(t.c/tot*100) : 0,
+    accLast: h.length? Math.round(ok/h.length*100) : 0, lastN:h.length,
+    days:t.days.length, last:t.last||'', lesson:t.lesson,
+    time:Math.round((t.ms||0)/1000), med:median(t.times),
+    slow:t.slow||0, wFast:t.wFast||0, wSlow:t.wSlow||0,
+    bad:bad.map(function(k){ return {q:k, n:t.bad[k]}; }),
+    log:t.log||{}
+  };
 }
 /* ступень освоена: урок пройден, 60 верных ответов, 8 из последних 10, три разных дня */
 function hasLesson(id){ return typeof LESSONS!=='undefined' && !!LESSONS[id]; }
 function tpDone(id){
-  var t=tp(id), h=t.h||'', ok=0, i;
+  var t=tp(id), h=(t.h||'').slice(-10), ok=0, i;
   for(i=0;i<h.length;i++) if(h[i]==='1') ok++;
   if(hasLesson(id) && t.lesson!==1) return false;
   return t.c>=60 && h.length>=10 && ok>=8 && t.days.length>=3;
@@ -271,7 +316,7 @@ function tpOpen(id){
   return true;
 }
 function tpNeed(id){
-  var t=tp(id), h=t.h||'', ok=0, i, out=[];
+  var t=tp(id), h=(t.h||'').slice(-10), ok=0, i, out=[];
   for(i=0;i<h.length;i++) if(h[i]==='1') ok++;
   if(hasLesson(id)) out.push({lab:'урок', a:t.lesson, b:1});
   out.push({lab:'верных ответов', a:Math.min(t.c,60), b:60});
