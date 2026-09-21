@@ -9,8 +9,9 @@ function markFact(a,b,good){
   if(good){
     var t=today();
     if(f.d.indexOf(t)===-1) f.d.push(t);        // засчитываем день
-  } else if(f.d.length){
-    f.d.pop();                                   // ошибка снимает последний день
+  } else {
+    var t=today(), ix=f.d.indexOf(t);            // ошибка снимает только сегодняшний зачёт
+    if(ix>-1) f.d.splice(ix,1);
   }
   facts[k]=f; store.set('umn:facts',facts);
 }
@@ -37,7 +38,8 @@ function buildTable(){
     var a=cfg.tables[i];
     for(b=2;b<=9;b++){
       var f=stat(a,b);
-      pool.push([a,b,Math.max(.15, 1+f.w*4-Math.min(f.c,6)*.14)]);
+      /* a×a попадает в набор один раз, a×b — дважды: выравниваем вес */
+      pool.push([a,b,Math.max(.15, 1+f.w*4-Math.min(f.c,6)*.14) * (a===b?2:1)]);
     }
   }
   var total=0,j; for(j=0;j<pool.length;j++) total+=pool[j][2];
@@ -240,6 +242,8 @@ var TOPICS=[
  {id:'rest',   de:'Division mit Rest',    ru:'Деление с остатком'},
  {id:'double', de:'Verdoppeln und Halbieren', ru:'Удвоение и деление пополам'},
  {id:'order',  de:'Punkt vor Strich',      ru:'Порядок действий', open:true},
+ {id:'geld',   de:'Geld',                 ru:'Деньги: евро, центы, запятая'},
+ {id:'laenge', de:'Längen',               ru:'Длины: mm, cm, m, km'},
  {id:'geo',    de:'Umfang und Fläche',     ru:'Периметр и площадь', open:true}
 ];
 function tp(id){
@@ -377,9 +381,12 @@ function buildRest(){
     return {kind:'plain', topic:'rest', ans:n, ask:'Welche Zahl wurde geteilt?',
       text:BLANK+' <em>:</em> '+d+' <em>=</em> '+q+' R '+r,
       plain:n+' : '+d+' = '+q+' R '+r};
-  return {kind:'rest', topic:'rest', d:d, q:q, r:r, ans:q, ans2:r,   // два шага
+  return {kind:'rest', topic:'rest', two:true, d:d, q:q, r:r, ans:q, ans2:r,
     ask:'Wie oft passt die '+d+' hinein?',
     text:n+' <em>:</em> '+d+' <em>=</em> '+BLANK,
+    ask2:'Was bleibt übrig?',
+    text2:n+' <em>:</em> '+d+' <em>=</em> '+q+' R '+BLANK,
+    full:q+' R '+r,
     plain:n+' : '+d+' = '+q+' R '+r};
 }
 
@@ -395,4 +402,69 @@ function buildDouble(){
   var h=R(2,100), m=2*h;
   return {kind:'plain', topic:'double', ans:h, ask:'Halbiere die Zahl.',
     text:'die Hälfte von '+m+' <em>=</em> '+BLANK, plain:'die Hälfte von '+m+' = '+h};
+}
+
+/* ══ тема: Geld ══ */
+var cfg8 = store.get('umn:cfg8', {lvl:1, len:10});
+function eu(c){ return (Math.floor(c/100))+','+('0'+(c%100)).slice(-2)+' €'; }
+function buildGeld(){
+  var lvl=cfg8.lvl;
+  if(lvl===1){                                   // ct → € и ct, два поля
+    var c=R(1,9)*100 + R(0,19)*5;
+    return {kind:'plain', topic:'geld', two:true, ans:Math.floor(c/100), ans2:c%100,
+      ask:'Wie viele Euro sind das?',
+      text:c+' ct <em>=</em> '+BLANK+' €',
+      ask2:'Und wie viele Cent bleiben?',
+      text2:c+' ct <em>=</em> '+Math.floor(c/100)+' € '+BLANK+' ct',
+      full:eu(c), plain:c+' ct = '+eu(c)};
+  }
+  if(lvl===2){                                   // сложение сумм, ввод с запятой
+    var a=R(1,8)*100+R(0,19)*5, b=R(1,8)*100+R(0,19)*5;
+    return {kind:'plain', topic:'geld', comma:true, maxLen:6, ans:a+b,
+      ask:'Rechne zusammen.',
+      text:eu(a)+' <em>+</em> '+eu(b)+' <em>=</em> '+BLANK,
+      plain:eu(a)+' + '+eu(b)+' = '+eu(a+b)};
+  }
+  var pay=R(5,20)*100, cost=R(1,pay/100-1)*100+R(1,19)*5;   // сдача
+  return {kind:'plain', topic:'geld', comma:true, maxLen:6, ans:pay-cost,
+    ask:'Wie viel Rückgeld bekommst du?',
+    text:eu(pay)+' <em>−</em> '+eu(cost)+' <em>=</em> '+BLANK,
+    plain:eu(pay)+' − '+eu(cost)+' = '+eu(pay-cost)};
+}
+
+/* ══ тема: Längen ══ */
+var cfg9 = store.get('umn:cfg9', {lvl:1, len:10});
+function buildLaenge(){
+  var lvl=cfg9.lvl;
+  var U=[['cm','mm',10],['m','cm',100],['km','m',1000]];
+  var u=U[R(0,2)];
+  if(lvl===1){                                   // простой перевод
+    var n=R(2,9);
+    return {kind:'plain', topic:'laenge', ans:n*u[2],
+      ask:'Wandle um.',
+      text:n+' '+u[0]+' <em>=</em> '+BLANK+' '+u[1],
+      plain:n+' '+u[0]+' = '+(n*u[2])+' '+u[1]};
+  }
+  if(lvl===2){                                   // смешанная запись, туда и обратно
+    var a=R(1,9), b=R(1,u[2]-1);
+    if(u[2]===1000) b=R(1,9)*100+R(0,9)*10;
+    var tot=a*u[2]+b;
+    if(Math.random()<.5)
+      return {kind:'plain', topic:'laenge', ans:tot,
+        ask:'Wandle um.',
+        text:a+' '+u[0]+' '+b+' '+u[1]+' <em>=</em> '+BLANK+' '+u[1],
+        plain:a+' '+u[0]+' '+b+' '+u[1]+' = '+tot+' '+u[1]};
+    return {kind:'plain', topic:'laenge', two:true, ans:a, ans2:b,
+      ask:'Wie viele '+u[0]+' sind das?',
+      text:tot+' '+u[1]+' <em>=</em> '+BLANK+' '+u[0],
+      ask2:'Und wie viele '+u[1]+' bleiben?',
+      text2:tot+' '+u[1]+' <em>=</em> '+a+' '+u[0]+' '+BLANK+' '+u[1],
+      full:a+' '+u[0]+' '+b+' '+u[1], plain:tot+' '+u[1]+' = '+a+' '+u[0]+' '+b+' '+u[1]};
+  }
+  var x=R(1,9)*u[2]+R(0,u[2]-1), y=Math.random()<.35 ? x : R(1,9)*u[2]+R(0,u[2]-1);
+  var sign = x<y?0 : x===y?1 : 2;
+  return {kind:'plain', topic:'laenge', ans:sign, opts:[['<',0],['=',1],['>',2]],
+    ask:'Vergleiche.',
+    text:x+' '+u[1]+' <em>?</em> '+Math.floor(y/u[2])+' '+u[0]+' '+(y%u[2])+' '+u[1],
+    plain:x+' '+u[1]+' '+['<','=','>'][sign]+' '+Math.floor(y/u[2])+' '+u[0]+' '+(y%u[2])+' '+u[1]};
 }
