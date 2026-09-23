@@ -244,6 +244,8 @@ var TOPICS=[
  {id:'order',  de:'Punkt vor Strich',      ru:'Порядок действий', open:true},
  {id:'geld',   de:'Geld',                 ru:'Деньги: евро, центы, запятая'},
  {id:'laenge', de:'Längen',               ru:'Длины: mm, cm, m, km'},
+ {id:'gewicht',de:'Gewichte',             ru:'Вес: g, kg, t'},
+ {id:'zeit',   de:'Zeit',                 ru:'Время: часы, минуты, промежутки'},
  {id:'geo',    de:'Umfang und Fläche',     ru:'Периметр и площадь', open:true}
 ];
 function tp(id){
@@ -467,4 +469,66 @@ function buildLaenge(){
     ask:'Vergleiche.',
     text:x+' '+u[1]+' <em>?</em> '+Math.floor(y/u[2])+' '+u[0]+' '+(y%u[2])+' '+u[1],
     plain:x+' '+u[1]+' '+['<','=','>'][sign]+' '+Math.floor(y/u[2])+' '+u[0]+' '+(y%u[2])+' '+u[1]};
+}
+
+/* ══ тема: Gewichte ══ */
+var cfg10 = store.get('umn:cfg10', {lvl:1, len:10});
+function buildGewicht(){
+  var lvl=cfg10.lvl, U=Math.random()<.65 ? ['kg','g',1000] : ['t','kg',1000];
+  if(lvl===1){
+    var n=R(2,9);
+    return {kind:'plain', topic:'gewicht', ans:n*U[2], ask:'Wandle um.',
+      text:n+' '+U[0]+' <em>=</em> '+BLANK+' '+U[1],
+      plain:n+' '+U[0]+' = '+(n*U[2])+' '+U[1]};
+  }
+  if(lvl===2){
+    var a=R(1,9), b=R(1,9)*100+R(0,9)*10, tot=a*U[2]+b;
+    if(Math.random()<.5)
+      return {kind:'plain', topic:'gewicht', ans:tot, ask:'Wandle um.',
+        text:a+' '+U[0]+' '+b+' '+U[1]+' <em>=</em> '+BLANK+' '+U[1],
+        plain:a+' '+U[0]+' '+b+' '+U[1]+' = '+tot+' '+U[1]};
+    return {kind:'plain', topic:'gewicht', two:true, ans:a, ans2:b,
+      ask:'Wie viele '+U[0]+' sind das?',
+      text:tot+' '+U[1]+' <em>=</em> '+BLANK+' '+U[0],
+      ask2:'Und wie viele '+U[1]+' bleiben?',
+      text2:tot+' '+U[1]+' <em>=</em> '+a+' '+U[0]+' '+BLANK+' '+U[1],
+      full:a+' '+U[0]+' '+b+' '+U[1], plain:tot+' '+U[1]+' = '+a+' '+U[0]+' '+b+' '+U[1]};
+  }
+  var x=R(1,9)*U[2]+R(0,999), y=Math.random()<.3 ? x : R(1,9)*U[2]+R(0,999);
+  var sign = x<y?0 : x===y?1 : 2;
+  return {kind:'plain', topic:'gewicht', ans:sign, opts:[['<',0],['=',1],['>',2]],
+    ask:'Vergleiche.',
+    text:x+' '+U[1]+' <em>?</em> '+Math.floor(y/U[2])+' '+U[0]+' '+(y%U[2])+' '+U[1],
+    plain:x+' '+U[1]+' '+['<','=','>'][sign]+' '+Math.floor(y/U[2])+' '+U[0]+' '+(y%U[2])+' '+U[1]};
+}
+
+/* ══ тема: Zeit ══ */
+var cfg11 = store.get('umn:cfg11', {lvl:1, len:10});
+function hhmm(m){ return Math.floor(m/60)+':'+('0'+(m%60)).slice(-2); }
+function buildZeit(){
+  var lvl=cfg11.lvl;
+  if(lvl===1){                                    // перевод через 60
+    if(Math.random()<.5){
+      var h=R(1,5), mm=R(0,3)*15;
+      return {kind:'plain', topic:'zeit', ans:h*60+mm, ask:'Wandle um.',
+        text:h+' h '+(mm?mm+' min ':'')+'<em>=</em> '+BLANK+' min',
+        plain:h+' h '+(mm?mm+' min ':'')+'= '+(h*60+mm)+' min'};
+    }
+    var mn=R(2,9);
+    return {kind:'plain', topic:'zeit', ans:mn*60, ask:'Wandle um.',
+      text:mn+' min <em>=</em> '+BLANK+' s', plain:mn+' min = '+(mn*60)+' s'};
+  }
+  if(lvl===2){                                    // читаем циферблат
+    var t=R(1,11)*60+R(0,11)*5;
+    return {kind:'plain', topic:'zeit', two:true, clock:t, ans:Math.floor(t/60), ans2:t%60,
+      ask:'Wie viel Uhr ist es? Erst die Stunden.',
+      text:BLANK+' <em>:</em> ..',
+      ask2:'Und die Minuten?',
+      text2:Math.floor(t/60)+' <em>:</em> '+BLANK,
+      full:hhmm(t), plain:'Die Uhr zeigt '+hhmm(t)};
+  }
+  var from=R(6,10)*60+R(0,11)*5, dur=R(1,11)*5+R(0,1)*30;   // промежуток
+  return {kind:'plain', topic:'zeit', ans:dur, ask:'Wie lange dauert das?',
+    text:'von '+hhmm(from)+' bis '+hhmm(from+dur)+' <em>=</em> '+BLANK+' min',
+    plain:'von '+hhmm(from)+' bis '+hhmm(from+dur)+' = '+dur+' min'};
 }

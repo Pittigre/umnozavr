@@ -292,3 +292,116 @@ LESSONS.double=[
  {t:'Wortspeicher', x:'<b>das Doppelte</b> — двойное · <b>die Hälfte</b> — половина · <b>gerade</b> — чётное · <b>ungerade</b> — нечётное',
   pic:function(){ return twoBars(9,false); }, read:'das Doppelte von 9 = 18'}
 ];
+
+/* ── картинки для денег и длин ── */
+function coins(list){
+  var g='', x=24, i;
+  list.forEach(function(c){
+    var eur=c>=100, r=eur?21:17;
+    g+='<circle cx="'+(x+r)+'" cy="34" r="'+r+'" fill="'+(eur?'#E0CE8E':'#D9B48A')+'" stroke="#8A7440" stroke-width="2"/>';
+    g+='<text x="'+(x+r)+'" y="39" text-anchor="middle" font-size="'+(eur?13:11)+'" font-weight="800" fill="#4A3C18">'
+      + (eur?(c/100)+'€':c)+'</text>';
+    x+=2*r+9;
+  });
+  return svg(x+10, 70, g);
+}
+function ruler(cm, marks){
+  var W=560, x0=24, dx=(W-48)/cm, g='', i;
+  g+='<rect x="'+x0+'" y="28" width="'+(W-48)+'" height="34" fill="#FBF3DC" stroke="#8A7440" stroke-width="1.5"/>';
+  for(i=0;i<=cm*10;i++){
+    var x=x0+i*dx/10, big=(i%10===0), mid=(i%5===0);
+    g+='<line x1="'+x+'" y1="28" x2="'+x+'" y2="'+(big?52:mid?44:38)+'" stroke="#4A3C18" stroke-width="'+(big?1.6:0.8)+'"/>';
+    if(big) g+='<text x="'+x+'" y="76" text-anchor="middle" font-size="11" fill="#5A6E85">'+(i/10)+'</text>';
+  }
+  if(marks) g+='<rect x="'+x0+'" y="28" width="'+(marks*dx)+'" height="34" fill="#B7E4CD" opacity=".65"/>';
+  return svg(W, 86, g);
+}
+
+LESSONS.geld=[
+ {t:'Euro und Cent', x:'<b>1 Euro</b> sind <b>100 Cent</b>. Für 100 Cent bekommst du genau ein Euro-Stück.',
+  pic:function(){ return coins([50,20,20,10]); }, read:'50 ct + 20 ct + 20 ct + 10 ct = 100 ct = 1 €'},
+ {t:'Die Kommaschreibweise', x:'Man schreibt Euro und Cent zusammen — mit einem <b>Komma</b>. Links vom Komma die <b>Euro</b>, rechts die <b>Cent</b>.',
+  pic:function(){ return coins([200,100,50,20]); }, read:'3 € 70 ct  =  3,70 €'},
+ {t:'Immer zwei Stellen', x:'Rechts vom Komma stehen <b>immer zwei Ziffern</b>. Pass auf: <b>3,05 €</b> sind nur fünf Cent, <b>3,50 €</b> sind fünfzig!',
+  pic:function(){ return coins([200,100,5]); }, read:'3,05 €  ist viel weniger als  3,50 €'},
+ {t:'Mit Geld rechnen', x:'Rechne <b>Euro und Cent getrennt</b>. Werden es 100 Cent oder mehr, wird daraus ein Euro.',
+  pic:function(){ return coins([100,50,100,50,20]); }, read:'1,50 € + 1,70 € = 2 € 120 ct = 3,20 €'},
+ {t:'Wortspeicher', x:'<b>das Geld</b> — деньги · <b>der Cent</b> — цент · <b>das Komma</b> — запятая · <b>das Rückgeld</b> — сдача · <b>kosten</b> — стоить',
+  pic:function(){ return coins([200,200,50]); }, read:'4,50 €'}
+];
+LESSONS.laenge=[
+ {t:'Millimeter und Zentimeter', x:'Auf dem Lineal siehst du kleine und große Striche. Zwischen zwei großen Strichen liegen <b>10 Millimeter</b> — das ist <b>1 Zentimeter</b>.',
+  pic:function(){ return ruler(10,0); }, read:'1 cm = 10 mm'},
+ {t:'Die Umrechnungszahlen', x:'Drei Zahlen musst du können: <b>10</b>, <b>100</b> und <b>1000</b>. Mehr brauchst du für Längen nicht.',
+  pic:function(){ return ruler(10,3); }, read:'1 cm = 10 mm · 1 m = 100 cm · 1 km = 1000 m'},
+ {t:'Umwandeln', x:'<b>3 m 40 cm</b> — mach zuerst aus den Metern Zentimeter, dann zähle den Rest dazu.',
+  pic:function(){ return ruler(10,3.4); }, read:'3 m = 300 cm,  300 + 40 = 340 cm'},
+ {t:'Vergleichen', x:'Zum Vergleichen brauchst du <b>dieselbe Einheit</b>. Rechne beides um — erst dann siehst du, was größer ist.',
+  pic:function(){ return ruler(10,2.05); }, read:'2 m 5 cm = 205 cm  <  250 cm'},
+ {t:'Wortspeicher', x:'<b>die Länge</b> — длина · <b>umwandeln</b> — переводить · <b>messen</b> — измерять · <b>das Lineal</b> — линейка · <b>vergleichen</b> — сравнивать',
+  pic:function(){ return ruler(10,7); }, read:'7 cm = 70 mm'}
+];
+
+/* ── весы и циферблат ── */
+function scale(kg, g){
+  var W=420, cx=W/2, out='';
+  out+='<path d="M'+(cx-90)+' 120 L'+(cx+90)+' 120 L'+(cx+60)+' 132 L'+(cx-60)+' 132 Z" fill="#B9CBE0"/>';
+  out+='<rect x="'+(cx-8)+'" y="52" width="16" height="70" fill="#B9CBE0"/>';
+  out+='<path d="M'+(cx-84)+' 52 Q'+cx+' 14 '+(cx+84)+' 52 Z" fill="#EDF2F7" stroke="#8FA6BF" stroke-width="2"/>';
+  out+='<rect x="'+(cx-70)+'" y="40" width="140" height="16" rx="8" fill="#fff" stroke="#8FA6BF"/>';
+  out+='<text x="'+cx+'" y="53" text-anchor="middle" font-size="13" font-weight="800" fill="#2C4CC8">'
+     + kg+' kg '+('00'+g).slice(-3)+' g</text>';
+  var x=cx-60, i;
+  for(i=0;i<kg && i<6;i++){
+    out+='<rect x="'+x+'" y="'+(112-26)+'" width="26" height="26" rx="4" fill="#8FA6BF" stroke="#5A6E85"/>';
+    out+='<text x="'+(x+13)+'" y="'+(112-9)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">1kg</text>';
+    x+=30;
+  }
+  if(g) out+='<circle cx="'+(x+10)+'" cy="'+(112-13)+'" r="10" fill="#D9B48A" stroke="#8A7440" stroke-width="1.5"/>';
+  return svg(W,140,out);
+}
+function clock(min, hands){
+  var W=260, cx=W/2, cy=118, r=96, g='', i;
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#fff" stroke="#1B2A3A" stroke-width="4"/>';
+  for(i=0;i<60;i++){
+    var A=i*6*Math.PI/180, big=(i%5===0), r1=r-(big?13:6);
+    g+='<line x1="'+(cx+r1*Math.sin(A))+'" y1="'+(cy-r1*Math.cos(A))+'" x2="'+(cx+(r-2)*Math.sin(A))+'" y2="'
+      +(cy-(r-2)*Math.cos(A))+'" stroke="'+(big?'#1B2A3A':'#B9CBE0')+'" stroke-width="'+(big?3:1.4)+'"/>';
+  }
+  for(i=1;i<=12;i++){
+    var B=i*30*Math.PI/180, rr=r-30;
+    g+='<text x="'+(cx+rr*Math.sin(B))+'" y="'+(cy-rr*Math.cos(B)+6)+'" text-anchor="middle" font-size="17" font-weight="800" fill="#1B2A3A">'+i+'</text>';
+  }
+  if(hands!==false){
+    var hA=((min%720)/720)*2*Math.PI, mA=((min%60)/60)*2*Math.PI;
+    g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+(r-48)*Math.sin(hA))+'" y2="'+(cy-(r-48)*Math.cos(hA))+'" stroke="#2C4CC8" stroke-width="7" stroke-linecap="round"/>';
+    g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+(r-22)*Math.sin(mA))+'" y2="'+(cy-(r-22)*Math.cos(mA))+'" stroke="#C4372B" stroke-width="4.5" stroke-linecap="round"/>';
+  }
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="6" fill="#1B2A3A"/>';
+  return svg(W, cy+r+14, g);
+}
+
+LESSONS.gewicht=[
+ {t:'Die Waage', x:'Auf der <b>Waage</b> siehst du, wie <b>schwer</b> etwas ist. Ein Kilogramm-Gewicht hat <b>1000 Gramm</b>.',
+  pic:function(){ return scale(1,0); }, read:'1 kg = 1000 g'},
+ {t:'Umwandeln', x:'Wie bei den Längen: erst die <b>kg</b> in <b>g</b> umrechnen, dann den Rest dazuzählen.',
+  pic:function(){ return scale(2,300); }, read:'2 kg = 2000 g,  2000 + 300 = 2300 g'},
+ {t:'Tonne und Kilogramm', x:'Für sehr schwere Dinge — Autos, Elefanten — nimmt man die <b>Tonne</b>. Wieder die 1000!',
+  pic:function(){ return scale(5,0); }, read:'1 t = 1000 kg'},
+ {t:'Vergleichen', x:'Zum Vergleichen brauchst du <b>dieselbe Einheit</b>. Rechne beides in Gramm um — dann siehst du es sofort.',
+  pic:function(){ return scale(1,500); }, read:'1 kg 500 g = 1500 g  >  1200 g'},
+ {t:'Wortspeicher', x:'<b>das Gewicht</b> — вес · <b>wiegen</b> — весить · <b>die Waage</b> — весы · <b>schwer</b> — тяжёлый · <b>leicht</b> — лёгкий',
+  pic:function(){ return scale(3,250); }, read:'3 kg 250 g = 3250 g'}
+];
+LESSONS.zeit=[
+ {t:'Die Uhr', x:'Der <b>kleine blaue Zeiger</b> zeigt die Stunden, der <b>große rote</b> die Minuten. Einmal ganz herum sind <b>60 Minuten</b>.',
+  pic:function(){ return clock(8*60+20); }, read:'Die Uhr zeigt 8:20'},
+ {t:'Nicht 100, sondern 60', x:'Achtung, hier ist es anders als bei Metern und Gramm! Eine Stunde hat <b>60</b> Minuten, nicht 100. Deshalb sind <b>1 h 30 min</b> genau <b>90 min</b> — und nicht 130.',
+  pic:function(){ return clock(90); }, read:'1 h = 60 min · 1 min = 60 s · 1 h 30 min = 90 min'},
+ {t:'Uhrzeit lesen', x:'Lies zuerst die <b>Stunde</b> ab — die Zahl, die der kleine Zeiger schon hinter sich hat. Dann zähle die <b>Minuten</b> in Fünferschritten.',
+  pic:function(){ return clock(3*60+40); }, read:'3:40'},
+ {t:'Zeitspannen', x:'Von <b>8:20</b> bis <b>9:05</b>: geh zuerst bis zur vollen Stunde — das sind <b>40 min</b>. Dann noch <b>5 min</b> weiter. Zusammen <b>45 min</b>.',
+  pic:function(){ return clock(9*60+5); }, read:'8:20 → 9:00 → 9:05  =  40 + 5 = 45 min'},
+ {t:'Wortspeicher', x:'<b>die Uhr</b> — часы · <b>der Zeiger</b> — стрелка · <b>die Stunde</b> — час · <b>die Minute</b> — минута · <b>die Zeitspanne</b> — промежуток · <b>dauern</b> — длиться',
+  pic:function(){ return clock(6*60+30); }, read:'6:30 — halb sieben'}
+];

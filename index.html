@@ -380,10 +380,12 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
 <!-- ═══ СТИКЕРЫ ═══ -->
 <section id="stickers" class="hidden">
   <div class="card">
+    <div class="chips" id="seasonTabs" style="margin-bottom:12px"></div>
     <h2 id="stTitle">Награды</h2>
     <p class="hint" id="stNext" style="margin:0 0 12px"></p>
     <div class="sgrid" id="stGrid"></div>
   </div>
+  <button class="big hidden" id="newSeason">Начать второй сезон</button>
   <button class="ghost back">Назад</button>
 </section>
 
@@ -484,6 +486,6 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
 <script src="core.js"></script>
 <script src="topics.js"></script>
 <script src="lessons.js"></script>
-<script>wire_core(); wire_topics(); wire_lessons(); wire_new(); wire_report(); boot();</script>
+<script>wire_core(); wire_topics(); wire_lessons(); wire_new(); wire_report(); wire_season(); boot();</script>
 </body>
 </html>

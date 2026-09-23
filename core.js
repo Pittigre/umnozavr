@@ -25,7 +25,7 @@ var ach = store.get('umn:ach', {c:0, o:0, g:0, best:0, days:[], sess:0, got:[], 
 if(ach.o===undefined) ach.o=0;
 if(ach.g===undefined) ach.g=0;
 if(!ach.cap) ach.cap={d:'',n:0};
-var DAY_CAP = 80;
+var DAY_CAP = 100;
 var S = null;
 var saveAch = function(){ store.set('umn:ach', ach); };
 var today = function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
@@ -50,25 +50,51 @@ var sndNo=function(){ beep(190,.22,'triangle'); };
 var sndWin=function(){ [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,.14);}, i*110); }); };
 /* ── стикеры ── */
 /* ── награды ── */
+var DIRS={
+  rechnen:['table','zehner','teiler','rest','double'],
+  sach:['geld','laenge','gewicht','zeit'],
+  geo:['geo'],
+  struktur:['order']
+};
+function dirOf(topic){
+  for(var k in DIRS) if(DIRS[k].indexOf(topic)>-1) return k;
+  return null;
+}
+function dirBalls(k){ return (ach.dir&&ach.dir[k])||0; }
+
+/* ── сезоны ── */
+var SEASONS={
+ 1:{title:'Первый сезон', path:function(i){ return 'stickers/'+(i+1<10?'0':'')+(i+1)+'.png'; },
+    lock:'stickers/locked.png',
+    list:[{n:'Дебют',b:25},{n:'Первый мяч',b:60},{n:'В основе',b:110},{n:'Полузащита',b:170},
+          {n:'Плеймейкер',b:240},{n:'Бомбардир',b:310,o:60},{n:'Диспетчер',b:380,o:100},
+          {n:'Лидер атаки',b:440,o:120},{n:'Мастер поля',b:800,m:56,o:260,g:60},
+          {n:'Капитан',b:1300,m:64,o:380,g:140}]},
+ 2:{title:'Второй сезон', path:function(i){ return 'stickers/Season2/2_'+(10-i)+'.png'; },
+    lock:'stickers/Season2/2_0.png',
+    list:[{b:60},
+          {b:160,  d:{rechnen:45}},
+          {b:300,  d:{rechnen:85,  sach:65}},
+          {b:470,  d:{rechnen:130, sach:105,             struktur:45}},
+          {b:660,  d:{rechnen:185, sach:145, geo:55,     struktur:65}},
+          {b:880,  d:{rechnen:245, sach:195, geo:70,     struktur:90}},
+          {b:1120, d:{rechnen:315, sach:245, geo:90,     struktur:110}},
+          {b:1390, d:{rechnen:390, sach:305, geo:110,    struktur:140}},
+          {b:1680, d:{rechnen:470, sach:370, geo:135,    struktur:170}},
+          {b:2000, d:{rechnen:560, sach:440, geo:160,    struktur:200}}]}
+};
+var DIRNAME={rechnen:'Rechnen', sach:'Sachrechnen', geo:'Geometrie', struktur:'Punkt vor Strich'};
+function season(){ return ach.season||1; }
+function SC(){ return SEASONS[season()]; }
 var SEASON = 1;
-var STICK = [
-  {n:'Дебют',       b:25},
-  {n:'Первый мяч',  b:60},
-  {n:'В основе',    b:110},
-  {n:'Полузащита',  b:170},
-  {n:'Плеймейкер',  b:240},
-  {n:'Бомбардир',   b:310, o:60},
-  {n:'Диспетчер',   b:380, o:100},
-  {n:'Лидер атаки', b:440, o:120},
-  {n:'Мастер поля', b:800,  m:56, o:260, g:60},
-  {n:'Капитан',     b:1300, m:64, o:380, g:140}
-];
+function stickList(){ return SC().list; }
 /* прогресс к стикеру: доля по самому отстающему условию */
 function stParts(st){
-  var out=[{lab:'мячи', a:Math.min(ach.c,st.b), b:st.b}];
+  var out=[{lab:'мячи', a:Math.min(ach.c,st.b), b:st.b}], k;
   if(st.m) out.push({lab:'карта', a:Math.min(known(),st.m), b:st.m});
   if(st.o) out.push({lab:'порядок действий', a:Math.min(ach.o,st.o), b:st.o});
   if(st.g) out.push({lab:'геометрия', a:Math.min(ach.g,st.g), b:st.g});
+  if(st.d) for(k in st.d) out.push({lab:DIRNAME[k], a:Math.min(dirBalls(k),st.d[k]), b:st.d[k]});
   return out;
 }
 function stReady(st){
@@ -84,25 +110,25 @@ function stPct(st){
 function stNeed(st){
   return stParts(st).map(function(x){ return x.lab+' '+x.b; }).join(' · ');
 }
-function stFile(i){ return 'stickers/'+(i+1<10?'0':'')+(i+1)+'.png'; }
+function stFile(i){ return SC().path(i); }
 function stImg(i, got){
-  return '<img src="'+(got?stFile(i):'stickers/locked.png')+'" alt="" onerror="this.style.display=\'none\'">';
+  return '<img src="'+(got?stFile(i):SC().lock)+'" alt="" onerror="this.style.display=\'none\'">';
 }
 function checkStickers(){
   var fresh=[],i;
-  for(i=0;i<STICK.length;i++){
+  for(i=0;i<stickList().length;i++){
     if(ach.got.indexOf(i)>-1) continue;
-    if(stReady(STICK[i])){ ach.got.push(i); fresh.push(i); }
+    if(stReady(stickList()[i])){ ach.got.push(i); fresh.push(i); }
   }
   if(fresh.length) saveAch();
   return fresh;
 }
 function award(list){
   if(!list.length) return false;
-  var i=list.shift();
+  var i=list.shift(), st=stickList()[i];
   $('wPic').innerHTML = stImg(i,true)+'<span>'+(i+1)+'</span>';
-  $('wName').textContent = STICK[i].n;
-  $('wNeed').textContent = stNeed(STICK[i]);
+  $('wName').textContent = st.n || ('Награда '+(i+1));
+  $('wNeed').textContent = stNeed(st);
   $('wrap').classList.remove('hidden');
   sndWin();
   $('wOk').onclick=function(){
@@ -111,13 +137,34 @@ function award(list){
   };
   return true;
 }
+var viewSeason=null;
 function paintStickers(){
   var html='',i,next='';
-  for(i=0;i<STICK.length;i++){
-    var st=STICK[i], got=ach.got.indexOf(i)>-1;
+  var cur=season(), shown=viewSeason||cur, past=(shown!==cur);
+  var tabs='';
+  for(i=1;i<=cur;i++)
+    tabs+='<button class="chip wide" data-s="'+i+'" aria-pressed="'+(i===shown)+'">'+SEASONS[i].title+'</button>';
+  $('seasonTabs').innerHTML=tabs;
+  if(past){                                   // архив прошлого сезона
+    var A=ach.arch&&ach.arch[shown];
+    var L=SEASONS[shown].list, P=SEASONS[shown].path;
+    for(i=0;i<L.length;i++){
+      var was=A&&A.got.indexOf(i)>-1;
+      html+='<div class="st'+(was?' got':' lock')+'">'
+          + '<div class="pic"><img src="'+(was?P(i):SEASONS[shown].lock)+'" alt="" onerror="this.style.display=\'none\'"><span>'+(i+1)+'</span></div>'
+          + '<b>'+(L[i].n||('Награда '+(i+1)))+'</b><small>'+(was?'Открыт':'Не открыт')+'</small></div>';
+    }
+    $('stGrid').innerHTML=html;
+    $('stTitle').textContent=SEASONS[shown].title;
+    $('stNext').textContent = A ? 'Итог сезона: '+A.c+' мячей, наград '+A.got.length+' из '+L.length+'.' : '';
+    var old=document.getElementById('captBox'); if(old) old.remove();
+    return;
+  }
+  for(i=0;i<stickList().length;i++){
+    var st=stickList()[i], got=ach.got.indexOf(i)>-1;
     html += '<div class="st'+(got?' got':' lock')+'" data-i="'+i+'">'
           + '<div class="pic">'+stImg(i,got)+'<span>'+(i+1)+'</span></div>'
-          + '<b>'+(got?st.n:'Стикер '+(i+1))+'</b>'
+          + '<b>'+(got?(st.n||('Награда '+(i+1))):'Награда '+(i+1))+'</b>'
           + '<small>'+(got?'Открыт':stNeed(st))+'</small>'
           + (got?'':'<div class="track"><i style="width:'+stPct(st)+'%"></i></div>')
           + '</div>';
@@ -126,8 +173,8 @@ function paintStickers(){
     }
   }
   $('stGrid').innerHTML=html;
-  $('stTitle').textContent='Награды — '+ach.got.length+' из 10';
-  $('stNext').textContent = ach.got.length===10 ? 'Все награды сезона собраны!' : 'Следующая: '+next;
+  $('stTitle').textContent=SC().title+' — '+ach.got.length+' из '+stickList().length;
+  $('stNext').textContent = seasonDone() ? 'Все награды сезона собраны!' : 'Следующая: '+next;
 }
 
 /* просмотр награды на весь экран */
@@ -151,12 +198,12 @@ function makeCard(i, cb){
     }
     x.textAlign='center';
     x.fillStyle='#2C4CC8'; x.font='800 62px Segoe UI, sans-serif';
-    x.fillText(STICK[i].n, W/2, 760);
+    x.fillText(stickList()[i].n||('Награда '+(i+1)), W/2, 760);
     x.fillStyle='#1B2A3A'; x.font='700 34px Segoe UI, sans-serif';
     x.fillText('Награда открыта!', W/2, 815);
     x.fillStyle='#5A6E85'; x.font='400 28px Segoe UI, sans-serif';
-    x.fillText(stNeed(STICK[i]), W/2, 866);
-    x.fillText('Умножарий · сезон '+SEASON, W/2, 930);
+    x.fillText(stNeed(stickList()[i]), W/2, 866);
+    x.fillText('Умножарий · сезон '+season(), W/2, 930);
     cv.toBlob(function(bl){ cb(bl); }, 'image/png');
   };
   img.src=stFile(i);
@@ -171,11 +218,33 @@ function show(id){
 }
 
 /* ── клавиатура ── */
+function padKeys(){
+  var money = !!(S.q && S.q.comma && !S.step2 ? S.q.comma : (S.q && S.q.comma2 && S.step2));
+  var want = money ? '1,2,3,4,5,6,7,8,9,⌫,0|,✓'.split(',').join(',') : '';
+  var keys = money ? ['1','2','3','4','5','6','7','8','9',',','0','⌫','✓']
+                   : ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+  var pad=$('pad');
+  if(pad.dataset.set===keys.join('')) return;
+  pad.dataset.set=keys.join('');
+  pad.innerHTML=keys.map(function(l){
+    return '<button class="key'+(l==='✓'?' go':l==='⌫'?' del':'')+'" data-k="'+l+'">'+l+'</button>'; }).join('');
+  pad.style.gridTemplateColumns = keys.length===13 ? 'repeat(3,1fr)' : 'repeat(3,1fr)';
+}
 function typeIn(d){
   if(S.locked) return;
+  if(d===',' ){ if(S.typed && S.typed.indexOf(',')===-1) S.typed+=','; paintAnswer(); return; }
   if(d===null) S.typed=S.typed.slice(0,-1);
-  else if(S.typed.length<3) S.typed+=d;
+  else if(S.typed.length < (S.q && S.q.maxLen || 3)) S.typed+=d;
   paintAnswer();
+}
+/* ввод в центах, если в задании есть запятая */
+function readTyped(){
+  if(S.typed==='') return null;
+  var isMoney = S.q && ((S.step2 && S.q.comma2) || (!S.step2 && S.q.comma));
+  if(!isMoney) return +S.typed;
+  var p=S.typed.split(',');
+  var eur=+(p[0]||0), ct=p.length>1 ? +( (p[1]+'00').slice(0,2) ) : 0;
+  return eur*100+ct;
 }
 function paintAnswer(){
   var blank=document.querySelector('#task .blank');
@@ -200,11 +269,15 @@ function nextQuestion(){
   S.q = S.queue ? S.queue[S.i] :
         (S.topic==='table' ? buildTable() : S.topic==='order' ? buildOrder() :
          S.topic==='geo' ? buildGeo() : S.topic==='zehner' ? buildZehner() :
-         S.topic==='teiler' ? buildTeiler() : S.topic==='rest' ? buildRest() : buildDouble());
+         S.topic==='teiler' ? buildTeiler() : S.topic==='rest' ? buildRest() :
+         S.topic==='double' ? buildDouble() : S.topic==='geld' ? buildGeld() :
+         S.topic==='laenge' ? buildLaenge() : S.topic==='gewicht' ? buildGewicht() : buildZeit());
   S.typed=''; S.locked=false; S.qt=Date.now();
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
   S.step2 = false;
-  if(S.q.kind==='geo') geoPic(S.q); else $('gPic').classList.add('hidden');
+  if(S.q.kind==='geo') geoPic(S.q);
+  else if(S.q.clock){ $('gPic').classList.remove('hidden'); $('gPic').innerHTML=clock(S.q.clock); }
+  else $('gPic').classList.add('hidden');
   $('task').innerHTML = S.q.text;
   $('task').classList.remove('pop'); void $('task').offsetWidth; $('task').classList.add('pop');
   $('step0').textContent = S.q.given || '';
@@ -213,6 +286,7 @@ function nextQuestion(){
   $('pbar').style.width=(S.i/S.total*100)+'%';
   paintDay();
   paintAnswer();
+  padKeys();
   layout();
 }
 function paintDay(){
@@ -273,22 +347,22 @@ function pickOp(i, btn){
 function submit(val){
   if(S.locked || S.phase==='pick' || val===null || isNaN(val)) return;
   /* деление с остатком: первый ответ — частное, затем спрашиваем остаток */
-  if(S.q.kind==='rest' && !S.step2){
+  if(S.q.two && !S.step2){
     if(val!==S.q.ans){
       S.locked=true; S.streak=0; S.mistakes.push(S.q);
-      tpMark('rest', false, Date.now()-(S.qt||Date.now()), S.q.plain);
+      if(S.q.topic) tpMark(S.q.topic, false, Date.now()-(S.qt||Date.now()), S.q.plain);
       $('stage').className='stage no'; $('verdict').className='verdict no';
-      $('verdict').innerHTML='Richtig wäre <b>'+S.q.q+' R '+S.q.r+'</b>';
+      $('verdict').innerHTML='Richtig wäre <b>'+S.q.full+'</b>';
       sndNo(); S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
       setTimeout(nextQuestion, 1600); return;
     }
     S.step2=true; S.typed=''; S.locked=false;
-    $('ask').textContent='Was bleibt übrig?';
-    $('task').innerHTML=(S.q.d*S.q.q+S.q.r)+' <em>:</em> '+S.q.d+' <em>=</em> '+S.q.q+' R '+BLANK;
+    $('ask').textContent=S.q.ask2;
+    $('task').innerHTML=S.q.text2;
     paintAnswer(); beep(760,.08); return;
   }
   S.locked=true;
-  var good = S.q.kind==='rest' ? (val===S.q.ans2) : (val===S.q.ans);
+  var good = S.q.two ? (val===S.q.ans2) : (val===S.q.ans);
   if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else if(S.q.kind==='order') markOrd(S.q.id, good?'c':'w');
   if(S.q.topic) tpMark(S.q.topic, good, Date.now()-(S.qt||Date.now()), S.q.plain);
 
@@ -303,6 +377,8 @@ function submit(val){
         ach.cap.n += give; ach.c += give;
         if(S.topic==='order') ach.o += give;
         if(S.topic==='geo')   ach.g += give;
+        var dk=dirOf(S.topic);
+        if(dk){ ach.dir=ach.dir||{}; ach.dir[dk]=(ach.dir[dk]||0)+give; }
       }
       S.capped = (left<=0);
       if(S.streak>ach.best) ach.best=S.streak;
@@ -319,6 +395,8 @@ function submit(val){
     $('verdict').className='verdict no';
     var shown=S.q.ans;
     if(S.q.opts){ S.q.opts.forEach(function(o){ if(o[1]===S.q.ans) shown=o[0]; }); }
+    else if(S.q.two) shown=S.q.full;
+    else if(S.q.comma) shown=eu(S.q.ans);
     else if(S.q.kind==='geo') shown=S.q.ans+' '+S.q.unit;
     $('verdict').innerHTML='Правильный ответ — <b>'+shown+'</b>';
     if($('answer').style.display!=='none'){ $('answer').className='answer'; $('answer').textContent=val; }
@@ -420,7 +498,7 @@ function paintProgress(){
 }
 
 function boot(){
-  paintChips(); paintOrderChips(); paintGeoChips(); paintTopics();
+  paintChips(); paintOrderChips(); paintGeoChips(); paintTopics(); paintSeasonBtn();
   if('serviceWorker' in navigator && location.protocol==='https:'){
     window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   }
@@ -433,8 +511,8 @@ function wire_core(){
     var i=+c.dataset.i, got=ach.got.indexOf(i)>-1;
     viewIdx=i;
     $('vPic').innerHTML = stImg(i,got)+'<span>'+(i+1)+'</span>';
-    $('vName').textContent = got ? STICK[i].n : 'Ещё не открыт';
-    $('vNeed').textContent = got ? stNeed(STICK[i]) : stParts(STICK[i]).map(function(x){ return x.lab+' '+x.a+'/'+x.b; }).join(' · ');
+    $('vName').textContent = got ? (stickList()[i].n||('Награда '+(i+1))) : 'Ещё не открыт';
+    $('vNeed').textContent = got ? stNeed(stickList()[i]) : stParts(stickList()[i]).map(function(x){ return x.lab+' '+x.a+'/'+x.b; }).join(' · ');
     $('vActs').classList.toggle('hidden', !got);
     $('view').classList.remove('hidden');
   });
@@ -473,7 +551,9 @@ function wire_core(){
   $('pad').addEventListener('click',function(e){
     var b=e.target.closest('.key'); if(!b) return;
     var k=b.dataset.k;
-    if(k==='⌫') typeIn(null); else if(k==='✓') submit(S.typed===''?null:+S.typed); else typeIn(k);
+    if(k==='⌫') typeIn(null);
+  else if(k==='✓') submit(readTyped());
+  else typeIn(k);
   });
   $('options').addEventListener('click',function(e){
     var b=e.target.closest('.opt'); if(!b) return; submit(+b.dataset.v);
@@ -486,7 +566,8 @@ function wire_core(){
     if($('game').classList.contains('hidden') || S.phase==='pick' || cfg.input!=='type') return;
     if(e.key>='0'&&e.key<='9') typeIn(e.key);
     else if(e.key==='Backspace') typeIn(null);
-    else if(e.key==='Enter') submit(S.typed===''?null:+S.typed);
+    else if(e.key===',' || e.key==='.') typeIn(',');
+  else if(e.key==='Enter') submit(readTyped());
   });
   $('playTable').onclick=function(){ startSession('table',null); };
   $('playOrder').onclick=function(){ startSession('order',null); };
@@ -559,7 +640,7 @@ function wire_core(){
     saveAch(); pStat();
   });
   $('toProgress').onclick=function(){ paintProgress(); show('progress'); };
-  $('toStickers').onclick=function(){ paintStickers(); show('stickers'); };
+  $('toStickers').onclick=function(){ viewSeason=null; paintSeasonBtn(); paintStickers(); show('stickers'); };
   $('reset').onclick=function(){
     if(!confirm('Стереть весь прогресс? Копия останется, откатить можно кнопкой выше.')) return;
     backup();
@@ -572,9 +653,13 @@ function wire_core(){
 var NEW={zehner:{lvls:[['1','Mal · 6 · 40'],['2','Geteilt · 240 : 6'],['3','Vermischt']]},
          teiler:{lvls:[['1','Vielfache'],['2','Teiler'],['3','Vermischt']]},
          rest:  {lvls:[['1','Ergebnis und Rest'],['2','Nur der Rest'],['3','Rückwärts']]},
-         double:{lvls:[['1','Verdoppeln'],['2','Halbieren'],['3','Vermischt']]}};
-var NCFG={zehner:'umn:cfg4', teiler:'umn:cfg5', rest:'umn:cfg6', double:'umn:cfg7'};
-function nCfg(id){ return id==='zehner'?cfg4:id==='teiler'?cfg5:id==='rest'?cfg6:cfg7; }
+         double:{lvls:[['1','Verdoppeln'],['2','Halbieren'],['3','Vermischt']]},
+         geld:  {lvls:[['1','ct in Euro'],['2','Zusammenrechnen'],['3','Rückgeld']]},
+         laenge:{lvls:[['1','Einfach umwandeln'],['2','Gemischte Längen'],['3','Vergleichen']]},
+         gewicht:{lvls:[['1','Einfach umwandeln'],['2','Gemischte Gewichte'],['3','Vergleichen']]},
+         zeit:  {lvls:[['1','Umwandeln'],['2','Uhr lesen'],['3','Zeitspannen']]}};
+var NCFG={zehner:'umn:cfg4', teiler:'umn:cfg5', rest:'umn:cfg6', double:'umn:cfg7', geld:'umn:cfg8', laenge:'umn:cfg9', gewicht:'umn:cfg10', zeit:'umn:cfg11'};
+function nCfg(id){ return id==='zehner'?cfg4:id==='teiler'?cfg5:id==='rest'?cfg6:id==='double'?cfg7:id==='geld'?cfg8:id==='laenge'?cfg9:id==='gewicht'?cfg10:cfg11; }
 function nSave(id){ store.set(NCFG[id], nCfg(id)); }
 var curNew=null;
 
@@ -637,6 +722,15 @@ function wire_new(){
     ach.unlock[b.dataset.u]=!ach.unlock[b.dataset.u];
     saveAch(); paintUnlock(); paintTopics(); });
 }
+
+/* ══ смена сезона ══ */
+function startSeason(n){
+  ach.arch=ach.arch||{};
+  ach.arch[season()]={c:ach.c, o:ach.o, g:ach.g, dir:ach.dir||{}, got:ach.got.slice(), ended:today()};
+  ach.season=n; ach.c=0; ach.o=0; ach.g=0; ach.dir={}; ach.got=[];
+  saveAch(); backup();
+}
+function seasonDone(){ return ach.got.length>=stickList().length; }
 
 /* ══ отчёт по успеваемости ══ */
 var repOpen={};
@@ -713,6 +807,19 @@ function paintReport(){
   var html='', i;
   for(i=0;i<TOPICS.length;i++) html+=repRow(TOPICS[i]);
   $('report').innerHTML=html;
+}
+function wire_season(){
+  $('seasonTabs').addEventListener('click',function(e){
+    var b=e.target.closest('[data-s]'); if(!b) return;
+    viewSeason=+b.dataset.s; paintStickers();
+  });
+  $('newSeason').onclick=function(){
+    if(!confirm('Начать второй сезон? Мячи обнулятся, первый сезон уедет в архив, награды останутся.')) return;
+    startSeason(2); viewSeason=null; paintStickers(); paintReport();
+  };
+}
+function paintSeasonBtn(){
+  $('newSeason').classList.toggle('hidden', !(season()===1 && seasonDone()));
 }
 function wire_report(){
   $('report').addEventListener('click',function(e){
