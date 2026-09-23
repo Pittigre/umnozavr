@@ -1,5 +1,5 @@
 /* Умножарий — офлайн-кэш. Поднимите VERSION после любой правки файлов. */
-const VERSION = 'umnozhariy-v16';
+const VERSION = 'umnozhariy-v17';
 const ASSETS = [
   './',
   './index.html',

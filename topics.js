@@ -519,10 +519,10 @@ function buildZeit(){
       text:mn+' min <em>=</em> '+BLANK+' s', plain:mn+' min = '+(mn*60)+' s'};
   }
   if(lvl===2){                                    // читаем циферблат
-    var t=R(1,11)*60+R(0,11)*5;
+    var t=R(1,12)*60+R(0,11)*5;                   // включая 12 часов
     return {kind:'plain', topic:'zeit', two:true, clock:t, ans:Math.floor(t/60), ans2:t%60,
       ask:'Wie viel Uhr ist es? Erst die Stunden.',
-      text:BLANK+' <em>:</em> ..',
+      text:BLANK+' <em>:</em> <span class="dim">__</span>',
       ask2:'Und die Minuten?',
       text2:Math.floor(t/60)+' <em>:</em> '+BLANK,
       full:hhmm(t), plain:'Die Uhr zeigt '+hhmm(t)};
