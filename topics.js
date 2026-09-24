@@ -397,11 +397,12 @@ var cfg7 = store.get('umn:cfg7', {lvl:1, len:10});
 function buildDouble(){
   var lvl = cfg7.lvl===3 ? (Math.random()<.5?1:2) : cfg7.lvl;
   if(lvl===1){
-    var n = Math.random()<.5 ? R(2,50) : R(2,9)*10 + R(0,9);
+    /* в пределах сотни: чаще мелкие числа, изредка до 50 */
+    var n = Math.random()<.6 ? R(2,20) : R(21,50);
     return {kind:'plain', topic:'double', ans:2*n, ask:'Verdopple die Zahl.',
       text:'das Doppelte von '+n+' <em>=</em> '+BLANK, plain:'das Doppelte von '+n+' = '+(2*n)};
   }
-  var h=R(2,100), m=2*h;
+  var h = Math.random()<.6 ? R(2,25) : R(26,50), m=2*h;
   return {kind:'plain', topic:'double', ans:h, ask:'Halbiere die Zahl.',
     text:'die Hälfte von '+m+' <em>=</em> '+BLANK, plain:'die Hälfte von '+m+' = '+h};
 }
