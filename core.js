@@ -211,7 +211,7 @@ function makeCard(i, cb){
 
 
 /* ── экраны ── */
-var SCREENS=['topics','setupTable','setupOrder','setupNew','game','result','progress','stickers','geo','lesson','parent'];
+var SCREENS=['topics','setupTable','setupOrder','setupNew','game','result','progress','stickers','geo','lesson','parent','league','lgSetup'];
 function show(id){
   SCREENS.forEach(function(s){ $(s).classList.toggle('hidden', s!==id); });
   window.scrollTo(0,0);
@@ -261,7 +261,7 @@ function startSession(topic, queue){
      count:(topic!=='table' || cfg.input==='type'),
      mistakes:[], t0:Date.now(), queue:queue||null,
      total: queue ? queue.length : (topic==='table'?cfg.len:topic==='order'?cfg2.len:
-            topic==='geo'?cfg3.len:nCfg(topic).len)};
+            topic==='geo'?cfg3.len:topic==='match'?LG_MATCH:nCfg(topic).len)};
   show('game'); nextQuestion();
 }
 function nextQuestion(){
@@ -271,6 +271,7 @@ function nextQuestion(){
          S.topic==='geo' ? buildGeo() : S.topic==='zehner' ? buildZehner() :
          S.topic==='teiler' ? buildTeiler() : S.topic==='rest' ? buildRest() :
          S.topic==='double' ? buildDouble() : S.topic==='geld' ? buildGeld() :
+         S.topic==='match' ? lgBuild() :
          S.topic==='laenge' ? buildLaenge() : S.topic==='gewicht' ? buildGewicht() : buildZeit());
   S.typed=''; S.locked=false; S.qt=Date.now();
   S.phase = S.q.kind==='order' ? 'pick' : 'calc';
@@ -285,9 +286,23 @@ function nextQuestion(){
   $('stage').className='stage';
   $('pbar').style.width=(S.i/S.total*100)+'%';
   paintDay();
+  if(S.topic==='match') startTick();
   paintAnswer();
   padKeys();
   layout();
+}
+var tickT=null;
+function stopTick(){ if(tickT){ clearInterval(tickT); tickT=null; } $('timer').classList.add('hidden'); }
+function startTick(){
+  stopTick();
+  $('timer').classList.remove('hidden');
+  var left=LG_SEC*10;
+  $('tbar').style.width='100%';
+  tickT=setInterval(function(){
+    left--;
+    $('tbar').style.width=Math.max(0,left/(LG_SEC*10)*100)+'%';
+    if(left<=0){ stopTick(); if(!S.locked) submit(-1); }
+  }, 100);
 }
 function paintDay(){
   if(!S.count){ $('streak').innerHTML='<span style="color:var(--ink-soft);font-size:12px">без зачёта</span>'; return; }
@@ -346,13 +361,16 @@ function pickOp(i, btn){
 
 function submit(val){
   if(S.locked || S.phase==='pick' || val===null || isNaN(val)) return;
+  if(S.topic==='match') stopTick();
   /* деление с остатком: первый ответ — частное, затем спрашиваем остаток */
   if(S.q.two && !S.step2){
     if(val!==S.q.ans){
       S.locked=true; S.streak=0; S.mistakes.push(S.q);
-      if(S.q.topic) tpMark(S.q.topic, false, Date.now()-(S.qt||Date.now()), S.q.plain);
+      if(S.topic==='match' && S.q.topic){ S.dirs=S.dirs||{}; var dm=dirOf(S.q.topic); if(dm) S.dirs[dm]=1; }
+  if(S.q.topic) tpMark(S.q.topic, false, Date.now()-(S.qt||Date.now()), S.q.plain);
       $('stage').className='stage no'; $('verdict').className='verdict no';
-      $('verdict').innerHTML='Richtig wäre <b>'+S.q.full+'</b>';
+      $('verdict').innerHTML = S.topic==='match' ? 'Falsch' : ('Richtig wäre <b>'+S.q.full+'</b>');
+      if(S.topic==='match'){ S.wrong=S.wrong||[]; S.wrong.push(S.q.plain); }
       sndNo(); S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
       setTimeout(nextQuestion, 1600); return;
     }
@@ -364,11 +382,12 @@ function submit(val){
   S.locked=true;
   var good = S.q.two ? (val===S.q.ans2) : (val===S.q.ans);
   if(S.q.kind==='num') markFact(S.q.a,S.q.b,good); else if(S.q.kind==='order') markOrd(S.q.id, good?'c':'w');
+  if(S.topic==='match' && S.q.topic){ S.dirs=S.dirs||{}; var dm=dirOf(S.q.topic); if(dm) S.dirs[dm]=1; }
   if(S.q.topic) tpMark(S.q.topic, good, Date.now()-(S.qt||Date.now()), S.q.plain);
 
   if(good){
     S.right++; S.streak++; S.best=Math.max(S.best,S.streak);
-    if(S.count){
+    if(S.count && S.topic!=='match'){
       var pts = S.topic==='table' ? 1 : 2;
       if(ach.cap.d!==today()) ach.cap={d:today(), n:0};
       var left = DAY_CAP - ach.cap.n;
@@ -393,21 +412,28 @@ function submit(val){
     S.streak=0; S.mistakes.push(S.q);
     $('stage').className='stage no';
     $('verdict').className='verdict no';
+    if(S.topic==='match'){
+      $('verdict').innerHTML='Falsch';
+      S.wrong=S.wrong||[]; S.wrong.push(S.q.plain);
+    }
     var shown=S.q.ans;
     if(S.q.opts){ S.q.opts.forEach(function(o){ if(o[1]===S.q.ans) shown=o[0]; }); }
     else if(S.q.two) shown=S.q.full;
     else if(S.q.comma) shown=eu(S.q.ans);
     else if(S.q.kind==='geo') shown=S.q.ans+' '+S.q.unit;
-    $('verdict').innerHTML='Правильный ответ — <b>'+shown+'</b>';
+    if(S.topic!=='match') $('verdict').innerHTML='Правильный ответ — <b>'+shown+'</b>';
     if($('answer').style.display!=='none'){ $('answer').className='answer'; $('answer').textContent=val; }
     sndNo();
   }
   S.picked=false; paintDay();
   S.i++; $('pbar').style.width=(S.i/S.total*100)+'%';
-  setTimeout(nextQuestion, good?550:1600);
+  setTimeout(nextQuestion, S.topic==='match' ? (good?450:800) : (good?550:1600));
 }
 
 function finish(){
+  stopTick();
+  if(S.finished && S.topic!=='match') return;
+  if(S.topic==='match') return finishMatch();
   var sec=Math.round((Date.now()-S.t0)/1000);
   var pct=S.total?S.right/S.total:0;
   var n=pct>=.95?3:pct>=.8?2:pct>=.6?1:0;
@@ -571,9 +597,12 @@ function wire_core(){
   });
   $('playTable').onclick=function(){ startSession('table',null); };
   $('playOrder').onclick=function(){ startSession('order',null); };
-  $('again').onclick=function(){ startSession(S.topic,null); };
+  $('again').onclick=function(){
+  if(S.topic==='match'){ $('again').textContent='Ещё раз'; paintLeague(); show('league'); return; }
+  startSession(S.topic,null);
+};
   $('repeatErr').onclick=function(){ startSession(S.topic, S.mistakes.slice()); };
-  $('quit').onclick=function(){ show('topics'); };
+  $('quit').onclick=function(){ stopTick(); if(S&&S.topic==='match'){ paintLeague(); show('league'); return; } show('topics'); };
   (function initPin(){
     var pad=$('pinPad');
     ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(function(l){
@@ -721,6 +750,38 @@ function wire_new(){
     if(!ach.unlock) ach.unlock={};
     ach.unlock[b.dataset.u]=!ach.unlock[b.dataset.u];
     saveAch(); paintUnlock(); paintTopics(); });
+}
+
+/* ══ итоги матча ══ */
+function finishMatch(){
+  if(S.finished) return; S.finished=true;
+  var L=lg(), res=lgPlayRound(L, S.right);
+  L.last=today(); lgSave(L);
+  /* мячи за матч — в пределах дневной нормы, поровну по затронутым направлениям */
+  if(ach.cap.d!==today()) ach.cap={d:today(), n:0};
+  var give=Math.max(0, Math.min(LG_BALLS, DAY_CAP-ach.cap.n));
+  if(give){
+    ach.cap.n+=give; ach.c+=give;
+    var ds=Object.keys(S.dirs||{}), share=Math.floor(give/Math.max(1,ds.length)), i;
+    ach.dir=ach.dir||{};
+    for(i=0;i<ds.length;i++) ach.dir[ds[i]]=(ach.dir[ds[i]]||0)+share;
+  }
+  ach.sess++; saveAch(); backup();
+  var pos=lgPos(L);
+  $('stars').textContent = res.sc.p===3 ? '⚽' : res.sc.p===1 ? '🤝' : '💤';
+  $('rScore').textContent = res.sc.g[0]+' : '+res.sc.g[1];
+  $('rTime').innerHTML = '<b>'+res.sc.t+'</b> · '+S.right+' von '+S.total+' richtig<br>'
+    + L.team+' — '+pos+'-е место, '+L.pts+' Punkte'
+    + (give<LG_BALLS ? '<br>Норма дня выбрана, мячей начислено '+give : '<br>+'+give+' мячей');
+  var box=$('missBox');
+  if(S.wrong && S.wrong.length){
+    box.classList.remove('hidden');
+    $('missList').innerHTML=S.wrong.map(function(x){ return '<span class="miss">'+x+'</span>'; }).join('');
+  } else box.classList.add('hidden');
+  $('repeatErr').classList.add('hidden');
+  $('again').textContent='К таблице';
+  if(res.sc.p===3) sndWin(); else beep(660,.15);
+  show('result');
 }
 
 /* ══ смена сезона ══ */

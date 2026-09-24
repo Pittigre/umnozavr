@@ -185,6 +185,19 @@ h2{font-size:15px; font-weight:700; margin:0 0 8px}
 .badq{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px}
 .badq span{background:var(--no-bg); color:var(--no); border-radius:8px; padding:4px 8px; font-size:12.5px; font-weight:700}
 .dim{color:#B9CBE0; letter-spacing:2px}
+/* турнирная таблица */
+.tbl{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums}
+.tbl th{font-size:11px; color:var(--ink-soft); font-weight:700; padding:4px 2px; text-align:right; border-bottom:1px solid #E8EFF6}
+.tbl th:nth-child(2){text-align:left}
+.tbl td{padding:5px 2px; text-align:right; border-bottom:1px solid #F2F6FA}
+.tbl td:nth-child(2){text-align:left; font-weight:600}
+.tbl tr.me{background:#EAF1FC}
+.tbl tr.me td{font-weight:800; color:var(--pen)}
+.tbl tr.top td:first-child{color:var(--ok); font-weight:800}
+.form i{font-style:normal; display:inline-block; width:13px; height:13px; line-height:13px; border-radius:3px;
+  font-size:9px; text-align:center; color:#fff; margin-left:2px}
+.timer{height:6px; background:#DCE7F2; border-radius:99px; overflow:hidden; margin-bottom:10px}
+.timer i{display:block; height:100%; background:var(--gold); width:100%}
 .hidden{display:none !important}
 .pop{animation:pop .3s ease}
 @keyframes pop{0%{transform:scale(.7); opacity:0}100%{transform:scale(1); opacity:1}}
@@ -202,6 +215,7 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
 
   <div id="topicList"></div>
 
+  <button class="big" id="toLeague" style="margin-top:6px">⚽ Liga</button>
   <button class="ghost" id="toStickers">Награды</button>
   <button class="ghost" id="toProgress">Успехи</button>
 </section>
@@ -341,6 +355,33 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
   <button class="ghost back">Назад</button>
 </section>
 
+<!-- ═══ ЧЕМПИОНАТ ═══ -->
+<section id="league" class="hidden">
+  <div class="card">
+    <h2 id="lgTitle">Liga</h2>
+    <p class="hint" id="lgSub" style="margin:0"></p>
+  </div>
+  <button class="big" id="lgPlay">Matchtag</button>
+  <div class="card">
+    <h2>Tabelle</h2>
+    <div id="lgTable"></div>
+  </div>
+  <button class="ghost back">Назад</button>
+</section>
+
+<section id="lgSetup" class="hidden">
+  <div class="card">
+    <h2>Wähle dein Team</h2>
+    <div class="chips" id="lgTeams"></div>
+  </div>
+  <div class="card">
+    <h2>Wähle deinen Spieler</h2>
+    <div class="sgrid" id="lgPlayers" style="grid-template-columns:repeat(3,1fr)"></div>
+  </div>
+  <button class="big" id="lgStart">Saison starten</button>
+  <button class="ghost back">Назад</button>
+</section>
+
 <!-- ═══ ИГРА ═══ -->
 <section id="game" class="hidden">
   <div class="bar">
@@ -348,6 +389,7 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
     <div class="progress"><i id="pbar"></i></div>
     <div class="streak" id="streak"></div>
   </div>
+  <div class="timer hidden" id="timer"><i id="tbar"></i></div>
   <p class="ask" id="ask"></p>
   <div class="stage" id="stage">
     <p class="step0" id="step0"></p>
@@ -487,6 +529,7 @@ button:focus-visible{outline:3px solid #F0A93C; outline-offset:2px}
 <script src="core.js"></script>
 <script src="topics.js"></script>
 <script src="lessons.js"></script>
-<script>wire_core(); wire_topics(); wire_lessons(); wire_new(); wire_report(); wire_season(); boot();</script>
+<script src="league.js"></script>
+<script>wire_core(); wire_topics(); wire_lessons(); wire_new(); wire_report(); wire_season(); wire_league(); boot();</script>
 </body>
 </html>
